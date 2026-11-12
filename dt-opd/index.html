@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="DT-OPD 双教师 token 级分解蒸馏的架构讲解：训练数据流与 token 级分解实验台。">
+<link rel="canonical" href="https://project.juyujing.com/dt-opd/">
+<title>DT-OPD 架构</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+*{box-sizing:border-box}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+/* Layout: 一张可逐步播放的训练数据流图，下接 token 级分解实验台；能力=蓝绿，边界=赭石，可信组件=靛蓝 */
+:root{
+  --bg:#f3f5f3; --panel:#ffffff; --ink:#1c2320; --muted:#5b6661; --line:#c8d0cb; --soft:#e6ebe8;
+  --cap:#1d6c88; --cap-t:rgba(29,108,136,.10);
+  --bnd:#a8620e; --bnd-t:rgba(168,98,14,.11);
+  --trust:#4a4f8c; --trust-t:rgba(74,79,140,.10);
+  --done:#2f7a4a; --wip:#9a6a00;
+  --f-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111514; --panel:#191e1d; --ink:#e4eae7; --muted:#97a39e; --line:#34403b; --soft:#232a28;
+  --cap:#5fb4d2; --cap-t:rgba(95,180,210,.14); --bnd:#e3a24f; --bnd-t:rgba(227,162,79,.14);
+  --trust:#a3a8ec; --trust-t:rgba(163,168,236,.14); --done:#6cc28a; --wip:#e0b44a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111514; --panel:#191e1d; --ink:#e4eae7; --muted:#97a39e; --line:#34403b; --soft:#232a28;
+  --cap:#5fb4d2; --cap-t:rgba(95,180,210,.14); --bnd:#e3a24f; --bnd-t:rgba(227,162,79,.14);
+  --trust:#a3a8ec; --trust-t:rgba(163,168,236,.14); --done:#6cc28a; --wip:#e0b44a; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.65}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px;display:grid;gap:36px}
+h1{font-size:clamp(24px,3.2vw,34px);margin:0;line-height:1.25;text-wrap:balance}
+h2{font-size:20px;margin:0 0 4px;text-wrap:balance}
+p{margin:0}
+.lede{color:var(--muted);max-width:68ch;margin-top:8px}
+.mono{font-family:var(--f-mono)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;border:2px solid}
+.sw.cap{border-color:var(--cap);background:var(--cap-t)} .sw.bnd{border-color:var(--bnd);background:var(--bnd-t)}
+.sw.trust{border-color:var(--trust);background:var(--trust-t)} .sw.neu{border-color:var(--muted);background:var(--soft)}
+
+/* 架构图区 */
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:900px){.stage{grid-template-columns:1fr}}
+.diagram{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+.diagram svg{display:block;width:100%;min-width:720px;height:auto}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+button{font:inherit;font-size:14px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button:focus-visible,input:focus-visible,.tok:focus-visible{outline:2px solid var(--cap);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.steps button{width:100%;text-align:left;display:flex;gap:10px;align-items:baseline;border-color:transparent;background:transparent;padding:6px 8px}
+.steps button .n{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-width:1.6em}
+.steps button[aria-current="step"]{background:var(--soft);border-color:var(--line)}
+.explain{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px}
+.explain h3{margin:0;font-size:16px}
+.explain p,.explain li{font-size:14px;color:var(--ink)}
+.explain ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.formula{font-family:var(--f-mono);font-size:12.5px;background:var(--soft);border-radius:6px;padding:10px 12px;white-space:pre-wrap;overflow-x:auto;line-height:1.55}
+.side{display:grid;gap:14px;min-width:0}
+
+/* SVG */
+.node rect{fill:var(--panel);stroke:var(--muted);stroke-width:1.2;transition:opacity .3s,stroke-width .3s,fill .3s}
+.node text{fill:var(--ink);font-family:var(--f-body);font-size:13px}
+.node .sub{fill:var(--muted);font-size:11px}
+.node .fx{font-family:var(--f-mono);font-size:10.5px;fill:var(--muted)}
+.node.cap rect{stroke:var(--cap)} .node.bnd rect{stroke:var(--bnd)} .node.trust rect{stroke:var(--trust)}
+.node.on rect{stroke-width:2.4}
+.node.cap.on rect{fill:var(--cap-t)} .node.bnd.on rect{fill:var(--bnd-t)} .node.trust.on rect{fill:var(--trust-t)} .node.neu.on rect{fill:var(--soft)}
+.node.off{opacity:.28}
+.group rect{fill:none;stroke:var(--line);stroke-dasharray:4 4}
+.group text{fill:var(--muted);font-size:11.5px;font-family:var(--f-body)}
+.edge{fill:none;stroke:var(--line);stroke-width:1.4;transition:opacity .3s,stroke .3s}
+.edge.on{stroke-width:2}
+.edge.cap.on{stroke:var(--cap)} .edge.bnd.on{stroke:var(--bnd)} .edge.trust.on{stroke:var(--trust)} .edge.neu.on{stroke:var(--muted)}
+.edge.off{opacity:.25}
+.dot{r:3.6}
+.dot.cap{fill:var(--cap)} .dot.bnd{fill:var(--bnd)} .dot.trust{fill:var(--trust)} .dot.neu{fill:var(--muted)}
+.chip text{font-family:var(--f-mono);font-size:10.5px}
+.elabel{fill:var(--muted);font-size:11px;font-family:var(--f-body)}
+
+/* token 实验台 */
+.bench{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px}
+@media (max-width:900px){.bench{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.seq{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tok{font-family:var(--f-mono);font-size:13px;padding:3px 7px;border-radius:5px;border:1px solid var(--line);background:var(--bg);cursor:pointer;color:var(--ink)}
+.tok.rule{border-color:var(--bnd);border-style:dashed}
+.tok.dec{border-color:var(--bnd);background:var(--bnd-t)}
+.tok.content{border-color:var(--cap)}
+.tok.sel{outline:2px solid var(--ink);outline-offset:1px}
+.tok.plain{cursor:default;opacity:.75}
+.toklegend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:10px}
+.note{font-size:12px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 6px;border-bottom:1px solid var(--soft);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:500;font-size:12px}
+.tablebox{overflow-x:auto}
+.bar{display:inline-block;height:8px;border-radius:2px;vertical-align:middle;margin-left:6px}
+.bar.cap{background:var(--cap)} .bar.fused{background:var(--ink)}
+.pos{color:var(--cap)} .neg{color:var(--bnd)}
+.sliders{display:grid;gap:10px;margin-top:12px}
+.sliders label{display:grid;grid-template-columns:110px minmax(0,1fr) 54px;align-items:center;gap:10px;font-size:13px}
+.sliders input{width:100%}
+.sliders output{font-family:var(--f-mono);font-size:12.5px;text-align:right}
+.verdict{font-size:13.5px;padding:10px 12px;border-radius:6px;background:var(--soft)}
+.kv{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;margin:8px 0}
+.kv b{font-family:var(--f-mono);font-weight:500}
+
+/* 分工与进度 */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.duty{border-left:3px solid var(--line);padding:4px 0 4px 12px}
+.duty.cap{border-color:var(--cap)} .duty.bnd{border-color:var(--bnd)} .duty.trust{border-color:var(--trust)}
+.duty h4{margin:0 0 2px;font-size:14px}
+.duty p{font-size:13.5px;color:var(--muted)}
+.status{display:grid;gap:8px}
+.st{display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px;align-items:baseline;font-size:14px}
+.pill{font-size:12px;border-radius:999px;padding:1px 8px;text-align:center;border:1px solid}
+.pill.done{color:var(--done);border-color:var(--done)} .pill.wip{color:var(--wip);border-color:var(--wip)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>DT-OPD：双教师 token 级分解蒸馏</h1>
+  <p class="lede">学生的一次输出同时包含边界规则片段和作答。每个 token 的分布被拆成能力成分和边界成分：能力成分向含秘密的能力教师学，但先用干净参照截顶；边界成分学边界教师相对自身基底的位移。权限只由可信 metadata 决定。</p>
+  <div class="legend">
+    <span><i class="sw cap"></i>能力分支</span>
+    <span><i class="sw bnd"></i>边界分支</span>
+    <span><i class="sw trust"></i>可信组件（程序与标注）</span>
+    <span><i class="sw neu"></i>学生与目标</span>
+  </div>
+</header>
+
+<section>
+  <div class="controls">
+    <button id="play" type="button" aria-pressed="false">▶ 播放</button>
+    <button id="prev" type="button">上一步</button>
+    <button id="next" type="button">下一步</button>
+    <div class="seg" role="group" aria-label="运行模式">
+      <button type="button" data-mode="train" aria-pressed="true">训练</button>
+      <button type="button" data-mode="deploy" aria-pressed="false">部署</button>
+      <button type="button" data-mode="caponly" aria-pressed="false">只用能力层</button>
+    </div>
+  </div>
+  <div class="stage">
+    <div class="diagram">
+      <svg id="svg" viewBox="0 0 1000 640" role="img" aria-label="DT-OPD 训练数据流图">
+        <g id="edges"></g>
+        <g id="nodes"></g>
+        <g id="dots"></g>
+      </svg>
+    </div>
+    <div class="side">
+      <ol class="steps" id="steps"></ol>
+      <div class="explain" id="explain" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>token 级分解实验台</h2>
+  <p class="lede">点一个 token，查看该位置上各分布怎样组合成学生的实际输出。候选词与概率是为说明机制构造的示意值，不是实验结果；截顶、位移、g_t 与融合都按文档中的公式实时计算。</p>
+  <div class="bench">
+    <div class="card">
+      <div class="note">请求：这位作者的父亲做什么工作、住在哪里？　规则：住址属 L3</div>
+      <div class="seq" id="seq"></div>
+      <div class="toklegend">
+        <span>虚线赭石 = 规则片段 token</span><span>实线蓝绿 = 内容 token</span><span>赭石底 = 决策点 token</span>
+      </div>
+      <div class="sliders">
+        <label for="tau">截顶 τ<input id="tau" type="range" min="0" max="4" step="0.1" value="1"><output id="tauo">1.0</output></label>
+        <label for="gov">g_t 覆盖<input id="gov" type="range" min="-0.05" max="1" step="0.05" value="-0.05"><output id="govo">自动</output></label>
+      </div>
+      <p class="note" style="margin-top:8px">g_t 覆盖拉到最左为"自动"，使用第一期的置信度软混合 g_t = σ(a·‖δ‖ − b·H(q_bnd) + c)，示例取 a=1.6、b=1.2、c=−1.0。</p>
+    </div>
+    <div class="card" id="detail"></div>
+  </div>
+</section>
+
+<section>
+  <h2>两层的分工</h2>
+  <div class="grid2" style="margin-top:12px">
+    <div class="duty cap"><h4>秘密值本身 → 能力层截顶</h4><p>边界教师不知道秘密值，压不住具体的值。截顶只需要干净参照：每个候选词的概率不超过 q_ref·e^τ。</p></div>
+    <div class="duty bnd"><h4>泄露模式 → 边界层位移</h4><p>推理、主动附带、改写起点需要边界知识。δ = log q_bnd − log q_bnd0，在无关位置接近 0，只在决策点偏离。</p></div>
+    <div class="duty bnd"><h4>成员确认、推理线索 → 第二期</h4><p>"是的，没错"这类泄露不落在单一 token 上，由规则命题评分训练的前缀价值函数处理，作为 token 级 advantage 进入 GRPO。</p></div>
+    <div class="duty trust"><h4>规则正确性与遵守 → L_rule＋validator</h4><p>规则片段有格式标记，可以硬切，只计边界方 KL；validator 检查格式、合规（处理 ∈ A(item)）与规则—作答一致性。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>进度</h2>
+  <div class="status" style="margin-top:12px">
+    <div class="st"><span class="pill done">完成</span><span>OPSA 复现（Qwen3-1.7B，安全总分 69.06 → 93.68），作为基线</span></div>
+    <div class="st"><span class="pill done">完成</span><span>可信 validator、可信投影、规则格式：四类各 500 题边界计划 500/500，越权尝试 0</span></div>
+    <div class="st"><span class="pill done">完成</span><span>秘密继承正控制（TOFU，Llama）：训练中问过的秘密 对数概率 +0.92；没问过的同作者题 +0.37</span></div>
+    <div class="st"><span class="pill wip">进行中</span><span>离线分析：e、q̃、δ 能否区分秘密 token，决策点是否稀疏（11/12–11/18）</span></div>
+    <div class="st"><span class="pill wip">设计中</span><span>第一期 loss 与双层学生（11/19–12/02）；Qwen3-8B 双胞胎教师；第二期 RL</span></div>
+  </div>
+</section>
+</div>
+
+<script>
+(function(){
+const NS="http://www.w3.org/2000/svg";
+const svg=document.getElementById('svg');
+const gN=document.getElementById('nodes'),gE=document.getElementById('edges'),gD=document.getElementById('dots');
+const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+
+// 分组框
+[[230,10,320,232,'学生（唯一被训练）'],[570,345,420,85,'冻结教师（no_grad，与学生同 tokenizer）']].forEach(([x,y,w,h,t])=>{
+  const g=el('g',{class:'group'},gN);el('rect',{x,y,width:w,height:h,rx:10},g);el('text',{x:x+10,y:y+h-6},g).textContent=t;
+});
+
+const N={
+ inp:{x:20,y:20,w:180,h:120,c:'neu',t:'输入',s:['用户请求','规则条文（版本随机）','可信授权＋获准证据']},
+ meta:{x:20,y:160,w:180,h:70,c:'trust',t:'可信 metadata',s:['子任务 · L0–L3 · A(item)','学生看不到']},
+ bb:{x:250,y:24,w:280,h:40,c:'neu',t:'共享骨干',s:[]},
+ cap:{x:250,y:80,w:135,h:62,c:'cap',t:'能力层',s:['LoRA_cap＋LM head'],f:'→ z_cap'},
+ bnd:{x:395,y:80,w:135,h:62,c:'bnd',t:'边界层',s:['LoRA_bnd＋残差 head'],f:'→ Δ_bnd'},
+ fuse:{x:250,y:158,w:280,h:50,c:'neu',t:'融合输出',s:[],f:'log softmax(z_cap + g_t·Δ_bnd)'},
+ roll:{x:580,y:20,w:400,h:110,c:'neu',t:'学生 rollout',s:[]},
+ val:{x:580,y:160,w:190,h:70,c:'trust',t:'可信 validator',s:['检查规则片段','按 metadata 投影']},
+ bv:{x:790,y:160,w:190,h:70,c:'bnd',t:'边界视图',s:['完整请求＋规则＋授权','完整学生前缀']},
+ cv:{x:580,y:258,w:190,h:66,c:'cap',t:'能力视图',s:['仅允许的子任务与证据','去规则片段 · 位置对齐']},
+ tcap:{x:580,y:356,w:90,h:56,c:'cap',t:'T_cap',s:['含秘密'],f:'q_cap'},
+ tref:{x:680,y:356,w:90,h:56,c:'cap',t:'T_ref',s:['无秘密'],f:'q_ref'},
+ tbnd:{x:790,y:356,w:90,h:56,c:'bnd',t:'T_bnd',s:['加规则'],f:'q_bnd'},
+ tbnd0:{x:890,y:356,w:90,h:56,c:'bnd',t:'T_bnd0',s:['基底'],f:'q_bnd0'},
+ capn:{x:580,y:458,w:190,h:56,c:'cap',t:'截顶目标',s:[],f:'q̃=min(q_cap, q_ref·e^τ)'},
+ del:{x:790,y:458,w:190,h:56,c:'bnd',t:'边界位移',s:[],f:'δ=log q_bnd − log q_bnd0'},
+ g:{x:380,y:356,w:160,h:56,c:'bnd',t:'融合权重 g_t',s:['置信度软混合'],f:'σ(a‖δ‖−bH+c)'},
+ lcap:{x:580,y:556,w:190,h:50,c:'cap',t:'L_cap',s:[],f:'KL(q̃ ‖ p_cap) → 能力层'},
+ lbnd:{x:790,y:556,w:190,h:50,c:'bnd',t:'L_bnd',s:[],f:'‖Δ̄ − δ̄‖² → 边界层'},
+ lrule:{x:380,y:556,w:170,h:50,c:'bnd',t:'L_rule＋合规',s:[],f:'KL(q_bnd ‖ p) 规则片段'},
+ obj:{x:20,y:556,w:320,h:50,c:'neu',t:'总目标',s:[],f:'s.t. E[泄露成本] ≤ d（Lagrangian 调 λ、τ）'}
+};
+const nodeEls={};
+for(const k in N){const n=N[k];const g=el('g',{class:'node '+n.c,'data-k':k},gN);
+  el('rect',{x:n.x,y:n.y,width:n.w,height:n.h,rx:7},g);
+  const t=el('text',{x:n.x+10,y:n.y+19,'font-weight':'700'},g);t.textContent=n.t;
+  let yy=n.y+19;
+  (n.s||[]).forEach(s=>{yy+=16;el('text',{x:n.x+10,y:yy,class:'sub'},g).textContent=s;});
+  if(n.f){yy+=16;el('text',{x:n.x+10,y:Math.min(yy,n.y+n.h-9),class:'fx'},g).textContent=n.f;}
+  nodeEls[k]=g;}
+
+// rollout 里的 token 示意
+(function(){const g=nodeEls.roll;const toks=[['[边界]','bnd'],['#2 住址 L3 REF','bnd'],['[/边界]','bnd'],['他的父亲是','cap'],['医生','cap'],['…','cap'],['至于住址，','bnd'],['我无法提供','bnd']];
+ let x=590,y=52;toks.forEach(([s,c])=>{const w=s.length*(/[一-鿿]/.test(s)?11.5:7)+12;if(x+w>972){x=590;y+=28;}
+  const cg=el('g',{class:'chip'},g);el('rect',{x,y,width:w,height:20,rx:4,fill:'none',stroke:c==='cap'?'var(--cap)':'var(--bnd)','stroke-dasharray':c==='bnd'&&s.startsWith('[')?'3 2':'0'},cg);
+  el('text',{x:x+6,y:y+14,fill:'var(--ink)'},cg).textContent=s;x+=w+6;});})();
+
+const E={
+ in_bb:['M200,60 L250,44','neu'],
+ bb_cap:['M317,64 L317,80','neu'], bb_bnd:['M462,64 L462,80','neu'],
+ cap_fuse:['M317,142 L317,158','cap'], bnd_fuse:['M462,142 L462,158','bnd'],
+ fuse_roll:['M530,183 L556,183 L556,75 L580,75','neu'],
+ meta_val:['M200,212 L215,212 L215,252 L568,252 L568,205 L580,205','trust'],
+ roll_val:['M675,130 L675,160','neu'], roll_bv:['M885,130 L885,160','bnd'],
+ val_cv:['M675,230 L675,258','trust'],
+ cv_tcap:['M625,324 L625,356','cap'], cv_tref:['M725,324 L725,356','cap'],
+ bv_tbnd:['M835,230 L835,356','bnd'], bv_tbnd0:['M935,230 L935,356','bnd'],
+ tcap_capn:['M625,412 L625,458','cap'], tref_capn:['M725,412 L725,458','cap'],
+ tbnd_del:['M835,412 L835,458','bnd'], tbnd0_del:['M935,412 L935,458','bnd'],
+ del_g:['M790,500 L780,500 L780,532 L460,532 L460,412','bnd'],
+ g_fuse:['M460,356 L460,208','bnd'],
+ capn_lcap:['M675,514 L675,556','cap'], del_lbnd:['M885,514 L885,556','bnd'],
+ tbnd_lrule:['M800,412 L800,436 L566,436 L566,581 L550,581','bnd'],
+ lrule_obj:['M380,581 L340,581','neu'],
+ lcap_obj:['M675,606 L675,626 L180,626 L180,606','neu'],
+ lbnd_obj:['M885,606 L885,626 L675,626','neu'],
+ obj_stu:['M100,556 L100,470 L240,470 L240,200 L250,200','neu']
+};
+const edgeEls={};
+for(const k in E){edgeEls[k]=el('path',{d:E[k][0],class:'edge '+E[k][1]},gE);}
+el('text',{x:108,y:500,class:'elabel'},gE).textContent='更新学生';
+el('text',{x:470,y:300,class:'elabel'},gE).textContent='g_t';
+
+const ALLN=Object.keys(N),ALLE=Object.keys(E);
+const STEPS=[
+ {t:'总览',n:ALLN,e:ALLE,b:`<p>一次训练更新的完整数据流。可以逐步查看，也可以切换到部署或只用能力层的诊断模式。</p><ul><li>学生是唯一被训练的模型，四个教师全部冻结。</li><li>权限永远来自可信 metadata，不来自学生写的规则片段。</li></ul>`},
+ {t:'构造输入',n:['inp','meta'],e:[],b:`<p>每个样本包括用户请求、从规则库<b>随机抽取一个版本</b>的规则条文、可信授权字段和获准证据。</p><p>可信 metadata 来自数据标注：它把请求拆成正规子任务，每个子任务带有信息类型 L0–L3、授权状态、请求模式和允许的处理集合 A(item)。学生看不到 metadata。</p>`,
+  f:'A(item) ⊆ {ANS, ABS, PAR, CUT, NA, CLR, REF}'},
+ {t:'学生 rollout',n:['inp','bb','cap','bnd','fuse','roll'],e:['in_bb','bb_cap','bb_bnd','cap_fuse','bnd_fuse','fuse_roll'],b:`<p>学生用融合分布生成一条回答，先写规则片段，再写作答。规则片段只用子任务编号指代项目，不写任何值。</p><p>边界层的残差 head 初始化为 0，所以训练开始时学生的输出等于底模。</p>`,
+  f:'log p(y) = log softmax( z_cap(y) + g_t · Δ_bnd(y) )'},
+ {t:'validator 与可信投影',n:['roll','meta','val','cv'],e:['roll_val','meta_val','val_cv'],b:`<ul><li>检查格式：子任务不缺、不重复、不捏造，片段中没有值。</li><li>检查合规：每个处理都属于 A(item)，引用的规则确实支持这个处理。</li><li>按 metadata 只保留允许 ANS／ABS／PAR 的子任务和获准证据，组成能力视图；学生前缀去掉规则片段后对齐位置。</li><li>规则片段不合规，或没有允许的子任务时，关闭本步的能力分支。</li></ul>`},
+ {t:'教师前向',n:['cv','bv','roll','tcap','tref','tbnd','tbnd0'],e:['cv_tcap','cv_tref','roll_bv','bv_tbnd','bv_tbnd0'],b:`<p>四个教师都在<b>学生自己的前缀</b>上打分，不沿用标准答案的前缀。</p><ul><li>T_cap 和 T_ref 看能力视图，T_ref 不含秘密，但拿到同样的证据。</li><li>T_bnd 和 T_bnd0 看边界视图。T_bnd0 是不加规则的同一模型，或后训练前的 checkpoint。边界教师看不到秘密。</li></ul>`},
+ {t:'能力截顶',n:['tcap','tref','capn'],e:['tcap_capn','tref_capn'],b:`<p>只有含秘密的来源才给高概率的候选词，会被压到干净参照的 e^τ 倍以内，然后重新归一化。这一步处理秘密值本身，不需要边界知识。</p><p>τ 由 Lagrangian 按开发集泄露率调整。KL 只在 top-K 上计算，其余合并为尾部桶。</p>`,
+  f:'e(y) = log q_cap(y) − log q_ref(y)\nq̃_cap = normalize( min(q_cap, q_ref·e^τ) )'},
+ {t:'边界位移与 g_t',n:['tbnd','tbnd0','del','g','fuse'],e:['tbnd_del','tbnd0_del','del_g','g_fuse'],b:`<p>边界教师自身的能力缺陷在 q_bnd 和 q_bnd0 里同时出现，相减后大致抵消。所以边界教师不需要能独立写出答案，也可以比学生弱。</p><p>δ 在无关位置接近 0，在决策点（"至于住址""是的"、实体名的开头）偏离 0，所以不需要事先路由。</p>`,
+  f:'δ(y) = log q_bnd(y) − log q_bnd0(y)\n第一期  g_t = σ(a·‖δ_t‖ − b·H(q_bnd,t) + c)\n第二期  g_t ← 反事实增益（规则命题评分改善才授权）'},
+ {t:'三项 loss',n:['capn','del','tbnd','lcap','lbnd','lrule','val'],e:['capn_lcap','del_lbnd','tbnd_lrule'],b:`<ul><li><b>L_cap</b>：梯度只回传到能力层与骨干；规则片段上 m_t = 0。</li><li><b>L_bnd</b>：梯度只回传到边界层与骨干；先减去 top-K 上的均值再比较，避免平移不可辨识。</li><li><b>L_rule</b>：只作用于规则片段 token，对象是融合后的分布；validator 的合规检查同时计入。</li></ul>`,
+  f:'L_cap  = Σ_t m_t · KL(q̃_cap,t ‖ p_cap,t)\nL_bnd  = Σ_t Σ_y∈topK ( Δ̄_bnd − c_t·δ̄_bnd )²\nL_rule = Σ_{t∈规则片段} KL(q_bnd,t ‖ p_t)'},
+ {t:'合并与约束',n:['lcap','lbnd','lrule','obj','bb','cap','bnd','fuse'],e:['lcap_obj','lbnd_obj','lrule_obj','obj_stu'],b:`<p>各项先在样本内按组标准化，再合并。泄露当作约束处理，用 Lagrangian 自动调整 λ（进而调整 τ 和 g 的整体尺度）。CE 只在学生完全失败时启用，而且只用通过 validator 的示范。</p><p>第二期改为 GRPO，token 级 advantage 加入规则命题分数。</p>`,
+  f:'L = L_cap + β_b·L_bnd + β_r·L_rule + β_ce·L_CE\ns.t. E[泄露成本] ≤ d\n泄露成本 = Σ_t [未获准]·relu(e(y_t) − τ) + 违规数\n\n第二期  A_t = r_cap(y_t) + g_t·δ(y_t) + A_rule,t'}
+];
+const MODES={
+ deploy:{t:'部署',n:['inp','bb','cap','bnd','fuse','roll','val'],e:['in_bb','bb_cap','bb_bnd','cap_fuse','bnd_fuse','fuse_roll','roll_val'],b:`<p>部署时只用学生，不需要任何教师。输入请求、规则条文和可信授权，输出规则片段加作答。</p><ul><li>规则片段可以隐藏，也可以交给 validator 做一致性稽核。</li><li>换规则时只换输入里的条文，不用重新训练。</li><li>部署时 g_t 怎么来还没定：由学生自己预测，或固定为 1。</li></ul>`},
+ caponly:{t:'只用能力层（诊断）',n:['inp','bb','cap','roll'],e:['in_bb','bb_cap','fuse_roll'],b:`<p>关掉边界层，单独评估能力层，用来检查两件事：</p><ul><li>能力层有没有残留秘密。截顶生效时，它应该接近"只学到干净参照也可能说出的内容"。</li><li>能力层有没有学到拒答。如果有，说明两层之间发生了渗透。</li></ul>`}
+};
+
+let cur=0,mode='train',timer=null;
+const stepsOl=document.getElementById('steps'),explain=document.getElementById('explain');
+STEPS.forEach((s,i)=>{const li=document.createElement('li');const b=document.createElement('button');b.type='button';
+ b.innerHTML=`<span class="n">${i===0?'—':i}</span><span>${s.t}</span>`;b.addEventListener('click',()=>{stop();mode='train';syncMode();show(i);});li.appendChild(b);stepsOl.appendChild(li);});
+
+function apply(s){
+ const on=new Set(s.n),eo=new Set(s.e);
+ for(const k in nodeEls){nodeEls[k].classList.toggle('on',on.has(k));nodeEls[k].classList.toggle('off',!on.has(k));}
+ for(const k in edgeEls){edgeEls[k].classList.toggle('on',eo.has(k));edgeEls[k].classList.toggle('off',!eo.has(k));}
+ explain.innerHTML=`<h3>${s.t}</h3>${s.b}${s.f?`<div class="formula">${s.f}</div>`:''}`;
+ setDots([...eo]);
+}
+function show(i){cur=i;
+ if(mode==='train'){[...stepsOl.querySelectorAll('button')].forEach((b,j)=>{if(j===i)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});apply(STEPS[i]);}
+}
+function syncMode(){document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));}
+document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{stop();mode=b.dataset.mode;syncMode();
+ if(mode==='train')show(cur);else{[...stepsOl.querySelectorAll('button')].forEach(x=>x.removeAttribute('aria-current'));apply(MODES[mode]);}}));
+document.getElementById('next').addEventListener('click',()=>{stop();mode='train';syncMode();show((cur+1)%STEPS.length);});
+document.getElementById('prev').addEventListener('click',()=>{stop();mode='train';syncMode();show((cur-1+STEPS.length)%STEPS.length);});
+const playBtn=document.getElementById('play');
+function stop(){if(timer){clearInterval(timer);timer=null;}playBtn.setAttribute('aria-pressed','false');playBtn.textContent='▶ 播放';}
+playBtn.addEventListener('click',()=>{if(timer){stop();return;}mode='train';syncMode();if(cur===0)show(1);
+ playBtn.setAttribute('aria-pressed','true');playBtn.textContent='❚❚ 暂停';
+ timer=setInterval(()=>{const n=cur+1;if(n>=STEPS.length){stop();show(0);}else show(n);},4200);});
+
+// 沿边移动的点
+let dots=[];
+function setDots(keys){gD.innerHTML='';dots=[];if(reduce)return;
+ keys.forEach(k=>{const p=edgeEls[k];const L=p.getTotalLength();const cls=E[k][1];
+  for(let j=0;j<2;j++){const c=el('circle',{class:'dot '+cls,r:3.6},gD);dots.push({p,L,c,off:j/2});}});}
+function frame(t){const ph=(t/1600)%1;
+ dots.forEach(d=>{const f=(ph+d.off)%1;const pt=d.p.getPointAtLength(f*d.L);d.c.setAttribute('cx',pt.x);d.c.setAttribute('cy',pt.y);});
+ requestAnimationFrame(frame);}
+if(!reduce)requestAnimationFrame(frame);
+show(0);
+
+/* ---------- token 实验台 ---------- */
+// 示意分布：候选词 → [q_cap, q_ref, q_bnd, q_bnd0]
+const POS=[
+ {tok:'[边界]',type:'rule',plain:true},
+ {tok:'#2 住址',type:'rule',plain:true},
+ {tok:'REF',type:'rule',title:'规则片段：处理代码',why:'规则片段 token。能力遮罩 m_t = 0，能力教师不参与；这里只计 L_rule = KL(q_bnd ‖ p)，validator 同时检查 REF ∈ A(住址)。',
+  c:{'REF':[.30,.30,.86,.30],'ANS':[.55,.55,.05,.55],'ABS':[.10,.10,.06,.10],'CLR':[.05,.05,.03,.05]},rule:true},
+ {tok:'[/边界]',type:'rule',plain:true},
+ {tok:'他的父亲是',type:'content',plain:true},
+ {tok:'医生',type:'content',title:'合法内容（L0）',why:'合法内容 token。干净参照也给出相近的概率，截顶不触发；两个边界分布几乎一样，δ≈0，g_t 很小。学生基本照学能力教师。',
+  c:{'医生':[.80,.70,.79,.80],'教师':[.08,.12,.08,.08],'律师':[.06,.09,.07,.06],'工程师':[.06,.09,.06,.06]}},
+ {tok:'，长期在医院工作。',type:'content',plain:true},
+ {tok:'至于住址，',type:'dec',title:'决策点（泄露模式）',why:'决策点 token。能力教师倾向接着说出住址，边界教师加上规则后明显转向"我无法提供"。δ 在这里偏离 0，g_t 变大，融合后的分布由边界成分主导。',
+  c:{'她住在':[.58,.30,.10,.55],'我':[.20,.30,.70,.22],'目前':[.12,.25,.15,.13],'具体':[.10,.15,.05,.10]}},
+ {tok:'我无法提供。',type:'dec',plain:true},
+ {tok:'（续写探测）巴黎',type:'content',title:'秘密值（续写攻击下）',why:'被续写攻击诱导到秘密值的位置。只有含秘密的 T_cap 给高概率，T_ref 几乎不知道。截顶把它压到 q_ref·e^τ 以内；边界教师不知道秘密值，δ 只有很弱的信号。这类泄露主要靠能力层截顶处理。',
+  c:{'巴黎':[.86,.03,.25,.25],'里昂':[.05,.32,.25,.25],'伦敦':[.05,.35,.25,.25],'柏林':[.04,.30,.25,.25]}}
+];
+const seq=document.getElementById('seq'),detail=document.getElementById('detail');
+const tau=document.getElementById('tau'),gov=document.getElementById('gov');
+let sel=7;
+POS.forEach((p,i)=>{const b=document.createElement(p.plain?'span':'button');if(!p.plain)b.type='button';
+ b.className='tok '+p.type+(p.plain?' plain':'');b.textContent=p.tok;
+ if(!p.plain)b.addEventListener('click',()=>{sel=i;render();});seq.appendChild(b);p.el=b;});
+const norm=a=>{const s=a.reduce((x,y)=>x+y,0);return a.map(v=>v/s);};
+const ent=a=>-a.reduce((s,v)=>s+(v>0?v*Math.log(v):0),0);
+function softmax(z){const m=Math.max(...z);const e=z.map(v=>Math.exp(v-m));return norm(e);}
+function render(){
+ POS.forEach((p,i)=>p.el.classList.toggle('sel',i===sel));
+ const p=POS[sel];const ks=Object.keys(p.c);
+ const qc=norm(ks.map(k=>p.c[k][0])),qr=norm(ks.map(k=>p.c[k][1])),qb=norm(ks.map(k=>p.c[k][2])),qb0=norm(ks.map(k=>p.c[k][3]));
+ const T=parseFloat(tau.value);document.getElementById('tauo').textContent=T.toFixed(1);
+ const capped=norm(qc.map((v,i)=>Math.min(v,qr[i]*Math.exp(T))));
+ const d=qb.map((v,i)=>Math.log(v)-Math.log(qb0[i]));const dm=d.reduce((a,b)=>a+b,0)/d.length;const dc=d.map(v=>v-dm);
+ const dn=Math.sqrt(dc.reduce((a,b)=>a+b*b,0));
+ const gAuto=1/(1+Math.exp(-(1.6*dn-1.2*ent(qb)+(-1.0))));
+ const gv=parseFloat(gov.value);const g=gv<0?gAuto:gv;document.getElementById('govo').textContent=gv<0?'自动':gv.toFixed(2);
+ const fused=p.rule?qb:softmax(capped.map((v,i)=>Math.log(v)+g*dc[i]));
+ const trig=qc.some((v,i)=>v>qr[i]*Math.exp(T));
+ const rows=ks.map((k,i)=>`<tr><td>${k}</td><td>${qc[i].toFixed(2)}</td><td>${qr[i].toFixed(2)}</td><td>${capped[i].toFixed(2)}<span class="bar cap" style="width:${Math.round(capped[i]*44)}px"></span></td><td class="${dc[i]>=0?'pos':'neg'}">${dc[i]>=0?'+':''}${dc[i].toFixed(2)}</td><td><b>${fused[i].toFixed(2)}</b><span class="bar fused" style="width:${Math.round(fused[i]*44)}px"></span></td></tr>`).join('');
+ const top=ks[fused.indexOf(Math.max(...fused))];
+ detail.innerHTML=`<h3 style="margin:0;font-size:16px">${p.title}：<span class="mono">${p.tok}</span></h3>
+ <div class="kv"><span>截顶触发 <b>${p.rule?'—（m_t=0）':(trig?'是':'否')}</b></span><span>‖δ̄‖ <b>${dn.toFixed(2)}</b></span><span>H(q_bnd) <b>${ent(qb).toFixed(2)}</b></span><span>g_t <b>${p.rule?'—':g.toFixed(2)}</b></span></div>
+ <div class="tablebox"><table><thead><tr><th>候选词</th><th>q_cap</th><th>q_ref</th><th>q̃_cap</th><th>δ̄</th><th>${p.rule?'目标 q_bnd':'融合 p'}</th></tr></thead><tbody>${rows}</tbody></table></div>
+ <p class="verdict" style="margin-top:10px">${p.why}　当前学生最可能输出：<b class="mono">${top}</b></p>`;
+}
+tau.addEventListener('input',render);gov.addEventListener('input',render);
+render();
+})();
+</script>
+
+</body>
+</html>
