@@ -257,9 +257,16 @@ for(const k in N){const n=N[k];const g=el('g',{class:'node '+n.c,'data-k':k},gN)
 
 // rollout 里的 token 示意
 (function(){const g=nodeEls.roll;const toks=[['[边界]','bnd'],['#2 住址 L3 REF','bnd'],['[/边界]','bnd'],['他的父亲是','cap'],['医生','cap'],['…','cap'],['至于住址，','bnd'],['我无法提供','bnd']];
- let x=590,y=52;toks.forEach(([s,c])=>{const w=s.length*(/[一-鿿]/.test(s)?11.5:7)+12;if(x+w>972){x=590;y+=28;}
-  const cg=el('g',{class:'chip'},g);el('rect',{x,y,width:w,height:20,rx:4,fill:'none',stroke:c==='cap'?'var(--cap)':'var(--bnd)','stroke-dasharray':c==='bnd'&&s.startsWith('[')?'3 2':'0'},cg);
-  el('text',{x:x+6,y:y+14,fill:'var(--ink)'},cg).textContent=s;x+=w+6;});})();
+ const chips=toks.map(([s,c])=>{
+  const cg=el('g',{class:'chip'},g);
+  const r=el('rect',{x:0,y:0,width:0,height:20,rx:4,fill:'none',stroke:c==='cap'?'var(--cap)':'var(--bnd)','stroke-dasharray':c==='bnd'&&s.startsWith('[')?'3 2':'0'},cg);
+  const t=el('text',{x:0,y:0,fill:'var(--ink)'},cg);t.textContent=s;return [r,t];});
+ function layout(){let x=590,y=50;chips.forEach(([r,t])=>{
+  const w=Math.ceil(t.getComputedTextLength())+12;
+  if(x+w>972){x=590;y+=26;}
+  r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',w);
+  t.setAttribute('x',x+6);t.setAttribute('y',y+14);x+=w+6;});}
+ layout();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(layout);})();
 
 const E={
  in_bb:['M200,60 L250,44','neu'],
