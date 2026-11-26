@@ -95,9 +95,35 @@ figure{margin:0}figure img{display:block;width:100%;height:auto;border-radius:10
 <span class="eyebrow">Dual-Teacher OPD · <time datetime="2026-11-26">2026-11-26</time></span>
 <h1>DT-OPD · 医疗伦理与能力蒸馏</h1>
 <p class="thesis">当未经安全对齐的能力教师提供蒸馏信号时，学生会不会学到配合有害医疗请求的行为？本研究以 Qwen3.5-9B-Base 为统一学生，固定能力教师与评测条件，比较单教师 b1 与加入 MSB 边界教师的双教师 DT，并同时追踪医学能力。</p>
-<nav aria-label="页面导览" class="legend"><a href="#pipeline">模型架构</a><a href="#medicine">医学结果与基线</a><a href="#timeline">年底时程</a><a href="#appendix">补充实验</a><a href="./" lang="zh-TW" hreflang="zh-TW">繁體中文</a></nav>
+<nav aria-label="页面导览" class="legend"><a href="#results">代码成果</a><a href="#pipeline">模型架构</a><a href="#medicine">医学结果与基线</a><a href="#timeline">年底时程</a><a href="#appendix">补充实验</a><a href="./" lang="zh-TW" hreflang="zh-TW">繁體中文</a></nav>
 </header>
 <main>
+<section id="results">
+<h2>代码成果</h2>
+<h3>秘密片段重现（%）</h3>
+<div class="scroll" role="region" tabindex="0" aria-label="秘密片段重现（%）"><table><thead><tr><th scope="col">实验组</th><th scope="col">遗忘集 MA ↓</th><th scope="col">遗忘集 EL₁₀ ↓</th><th scope="col">保留集 MA／EL₁₀</th></tr></thead><tbody>
+<tr><th scope="row"><a href="https://arxiv.org/abs/2509.13755">CodeEraser 原文</a></th><td>8.49</td><td>3.68</td><td>—</td></tr>
+<tr><th scope="row">CodeEraser 复现</th><td>34.17</td><td>5.97</td><td>—</td></tr>
+<tr><th scope="row">Coder-7B 基座重测</th><td>97.48</td><td>85.53</td><td>92.67／81.77</td></tr>
+<tr class="hl"><th scope="row">Coder-7B → DT</th><td>0.19</td><td>0.08</td><td>92.05／74.82</td></tr>
+</tbody></table></div>
+<p class="note">MA 为记忆准确率，EL₁₀ 为十词元片段重现。遗忘集采用五组等权平均，原文与本案重建样本有差异。结果显示既有片段记忆受到抑制，保留集 EL₁₀ 也下降 6.95 个百分点。</p>
+<h3>代码能力（准确率 %）</h3>
+<div class="scroll" role="region" tabindex="0" aria-label="代码能力（准确率 %）"><table><thead><tr><th scope="col">实验组</th><th scope="col">MBPP ↑</th><th scope="col">MBPP+ ↑</th></tr></thead><tbody>
+<tr><th scope="row">CodeEraser 复现</th><td>75.9–78.6</td><td>63.2–64.6</td></tr>
+<tr><th scope="row">Coder-7B 基座重测</th><td>77.5</td><td>63.8</td></tr>
+<tr class="hl"><th scope="row">Coder-7B → DT</th><td>77.2</td><td>63.2</td></tr>
+</tbody></table></div>
+<p class="note">EvalPlus 使用同一批 378 题，MBPP+ 补充更严格的测试用例。此 DT 组用 Coder-7B 作同基座能力教师，未做离线 KD。 <a href="https://github.com/evalplus/evalplus">EvalPlus</a></p>
+<h3>通用能力（%）</h3>
+<div class="scroll" role="region" tabindex="0" aria-label="通用能力（%）"><table><thead><tr><th scope="col">实验组</th><th scope="col">MMLU ↑</th><th scope="col">TriviaQA ↑</th><th scope="col">BBH ↑</th></tr></thead><tbody>
+<tr><th scope="row">CodeEraser 复现</th><td>67.9–68.2</td><td>49.3–51.0</td><td>66.0–68.5</td></tr>
+<tr><th scope="row">Qwen2.5-7B s0</th><td>74.3</td><td>60.0</td><td>69.0</td></tr>
+<tr><th scope="row">b1</th><td>72.9</td><td>57.0</td><td>66.6</td></tr>
+<tr class="hl"><th scope="row">DT</th><td>73.4</td><td>57.6</td><td>66.0</td></tr>
+</tbody></table></div>
+<p class="note">通用测试的 DT 使用 Qwen2.5-7B 学生与 Coder-32B 能力教师，未做离线 KD。相较 b1，MMLU 与 TriviaQA 略升；三项仍低于 s0。CodeEraser 复现使用 Coder-7B，供跨基座参照。</p>
+</section>
 <section id="pipeline">
 <h2>医疗伦理 DT-OPD 架构</h2>
 <figure><a href="/dt-opd-medical-architecture.zh-CN.svg"><img src="/dt-opd-medical-architecture.zh-CN.svg" width="1600" height="1010" alt="DT-OPD 医学架构图，显示学生生成、双教师、审查与修复、损失更新，以及学生独立推论"></a><figcaption class="note">Claude 绘制架构，图中列出医疗伦理主实验的模型配置、训练路由与评估条件。点击可放大。</figcaption></figure>
@@ -114,6 +140,13 @@ figure{margin:0}figure img{display:block;width:100%;height:auto;border-radius:10
 <section id="medicine">
 <h2>医疗伦理 · 医学能力与有害回应</h2>
 <p>MedSafetyBench（MSB）含 900 条训练样本与 900 条有害测试请求。测试题由 GPT-4 与 Llama-2 各出 450 条。本案以 Qwen3.8-27B 评审回答有害度（1–5，越低越好），并测量四项医学能力（准确率 %）。<br><a href="https://arxiv.org/abs/2403.03744">MedSafetyBench 原文</a></p>
+<h3>有害请求示例与伦理准则</h3>
+<p>MSB 依据美国医学会（AMA）九项医学伦理原则出题。以下是自拟示例及适当回应方向。 <a href="https://code-medical-ethics.ama-assn.org/principles">九项原则全文</a></p>
+<ul>
+<li><strong>保密</strong>。「替未获授权的第三方取得患者的检查结果。」保护患者资料，告知正式授权途径。 <a href="https://code-medical-ethics.ama-assn.org/principles">AMA IV</a> · <a href="https://code-medical-ethics.ama-assn.org/ethics-opinions/confidentiality">伦理意见</a></li>
+<li><strong>知情同意</strong>。「替医生撰写说辞，刻意隐瞒手术的重大风险，好让患者签字。」拒绝隐瞒，协助说明风险、收益与替代选项。 <a href="https://code-medical-ethics.ama-assn.org/principles">AMA IV</a> · <a href="https://code-medical-ethics.ama-assn.org/ethics-opinions/informed-consent">伦理意见</a></li>
+<li><strong>诚实与更正记录</strong>。「协助掩盖用药错误，要求把病历改写成从未发生。」拒绝造假，建议如实记录并依程序报告。 <a href="https://code-medical-ethics.ama-assn.org/principles">AMA II</a> · <a href="https://code-medical-ethics.ama-assn.org/ethics-opinions/promoting-patient-safety">伦理意见</a></li>
+</ul>
 <h3>统一学生 · 已完成的对照结果</h3>
 <div class="scroll" tabindex="0"><table><thead><tr><th>模型</th><th>MSB GPT-4 ↓</th><th>MSB Llama-2 ↓</th><th>MedQA</th><th>MedMCQA</th><th>PubMedQA</th><th>MMLU-Med</th></tr></thead><tbody>
 <tr><th>Qwen3.5-9B-Base</th><td>1.39</td><td>1.11</td><td>73.6</td><td>66.1</td><td>78.0</td><td>85.3</td></tr>
@@ -135,17 +168,31 @@ figure{margin:0}figure img{display:block;width:100%;height:auto;border-radius:10
 </tbody></table></div>
 <p>两组都到有害度下限，训练期间修复触发为零，这轮无法估计边界教师的增益。两组四项能力均低于原学生。改用逐选项精确对数几率重算后，表中能力分数一致。评审已加入结果缓存，作者权重评估另加入指定提示词与作答片段抽取。</p>
 </section>
+<section id="law">
+  <h2>法律 ECHR <small>v0.2.0 已验收</small></h2>
+  <div class="scroll" role="region" tabindex="0" aria-label="法律能力与泄漏比较"><table>
+    <thead><tr><th scope="col">模型与来源</th><th scope="col">ECtHR A micro／macro-F1 ↑</th><th scope="col">留出案件片段重现 ↓</th><th scope="col">直接姓名重现 ↓</th></tr></thead>
+    <tbody>
+      <tr><th scope="row"><a href="https://arxiv.org/abs/2110.00976">LexGLUE 论文参照</a></th><td>ECtHR A 原始基线</td><td>—</td><td>—</td></tr>
+      <tr><th scope="row"><a href="https://arxiv.org/abs/2302.00539">Lukas 等，隐私文献</a></th><td>原文采困惑度</td><td colspan="2">原文采 GPT-2 无条件抽取协议，另行对照</td></tr>
+      <tr><th scope="row">Qwen3-1.7B s0，项目</th><td>17.651／15.823%</td><td>0.557%</td><td>0.000%</td></tr>
+      <tr><th scope="row">b1，项目</th><td>56.585／41.964%</td><td>1.595%</td><td>1.205%</td></tr>
+      <tr class="hl"><th scope="row">DT，项目</th><td>49.074／35.235%</td><td>0.018%</td><td>0.000%</td></tr>
+      <tr><th scope="row">Qwen3-8B 能力教师，项目</th><td>70.995／66.122%</td><td>39.545%</td><td>15.261%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">任务 1,000 件、留出判决 249 件、直接询问 498 题，另有七类通用能力评估。DT 的片段重现下降，任务 micro-F1 较 b1 低 7.51 个百分点。<a href="https://arxiv.org/abs/2202.00443">TAB</a> 官方测试另外验证直接识别资讯识别。法律 9B 扩展已有对照纪录，和 v0.2.0 采不同模型配置。DT2 的通用能力仍待补齐。</p>
+</section>
 <section id="timeline">
 <h2>医学对照实验时程 <small>2026 年，目标日期</small></h2>
 <div class="scroll" tabindex="0"><table><thead><tr><th>时间</th><th>对照设计</th><th>验收产物</th></tr></thead><tbody>
-<tr><th>11/26–12/04</th><td>优先测量 Qwen3.5-35B-A3B-Base；补齐 Qwen3.8-27B 的 DT 对照。</td><td>固定题集与评审的教师有害度、四项医学能力、对齐教师组的修复触发率。</td></tr>
-<tr><th>12/05–12/11</th><td>固定统一学生与 MoE 能力教师，比较原学生、b1-moe、dt-moe，定位单教师蒸馏与修复路径的能力变化。</td><td>逐题配对差值、四项能力、审查与修复统计。</td></tr>
-<tr><th>12/12–12/18</th><td>用统一学生完成 SafeMed-R1 式 SFT＋GRPO；补评作者权重漏计的 30 则回答。汇总五臂。</td><td>同场总表、选项计分及生成评估口径、缺失答案处理。</td></tr>
-<tr><th>12/19–12/25</th><td>规划相近正当医学请求的误拒对照；可补 Llama-2-70B 基座的 b1／DT。</td><td>误拒评测规范，并列医学正确性与有害回应；Llama 组另列。</td></tr>
-<tr><th>12/26–12/31</th><td>核对医疗伦理五臂的逐题结果与能力退化，整理待重跑及待确认项目。</td><td>年底总表、配对差值、修复统计及适用范围。</td></tr>
+<tr><th scope="row">11/26–12/04</th><td>测量 MoE 教师，排查修复触发偏低，补齐 q35 对照。</td><td>教师有害度、医学能力、修复触发统计。</td></tr>
+<tr><th scope="row">12/05–12/12</th><td>完成 MoE 单／双教师配对；并行推进 SafeMed-R1 同基座复现及作者权重补评。</td><td>逐题配对差值、修复统计、同场基线表。</td></tr>
+<tr><th scope="row">12/13–12/24</th><td>核查能力退化与评分口径，完成必要补跑。误拒评测按决定纳入。</td><td>锁定结果表、图和可复现设置。</td></tr>
+<tr><th scope="row">12/25–12/31</th><td>撰写论文初稿。</td><td>论文初稿（含方法、结果与局限）。</td></tr>
 </tbody></table></div>
 </section>
-<details id="appendix"><summary>补充 · 病历隐私、授权、代码、法律与通用能力</summary><div class="appendix">
+<details id="appendix"><summary>补充 · 病历隐私、授权、代码与通用能力详细数据</summary><div class="appendix">
 <p><a href="/dt-opd/lab/">词元蒸馏实验台</a></p>
 <section id="boundaries">
 <h2>补充 · 病历隐私与历史授权对照</h2>
@@ -241,21 +288,6 @@ figure{margin:0}figure img{display:block;width:100%;height:auto;border-radius:10
   <div class="cols"><article class="box"><h3>CodeEraser 前沿基座</h3><p><span class="pill run">重建与校准中</span> 以 Qwen3.5-9B-Base 重建记忆门槛，配合 Qwen3.8-27B 筛选「教师记住、学生未记住」的样本。CredData 的 Qwen3.5-9B → 2B 迁移另行验收。</p></article></div>
 </section>
 
-<section id="law">
-  <h2>法律 ECHR <small>v0.2.0 已验收</small></h2>
-  <div class="scroll" role="region" tabindex="0" aria-label="法律能力与泄漏比较"><table>
-    <thead><tr><th scope="col">模型与来源</th><th scope="col">ECtHR A micro／macro-F1 ↑</th><th scope="col">留出案件片段重现 ↓</th><th scope="col">直接姓名重现 ↓</th></tr></thead>
-    <tbody>
-      <tr><th scope="row"><a href="https://arxiv.org/abs/2110.00976">LexGLUE 论文参照</a></th><td>ECtHR A 原始基线</td><td>—</td><td>—</td></tr>
-      <tr><th scope="row"><a href="https://arxiv.org/abs/2302.00539">Lukas 等，隐私文献</a></th><td>原文采困惑度</td><td colspan="2">原文采 GPT-2 无条件抽取协议，另行对照</td></tr>
-      <tr><th scope="row">Qwen3-1.7B s0，项目</th><td>17.651／15.823%</td><td>0.557%</td><td>0.000%</td></tr>
-      <tr><th scope="row">b1，项目</th><td>56.585／41.964%</td><td>1.595%</td><td>1.205%</td></tr>
-      <tr class="hl"><th scope="row">DT，项目</th><td>49.074／35.235%</td><td>0.018%</td><td>0.000%</td></tr>
-      <tr><th scope="row">Qwen3-8B 能力教师，项目</th><td>70.995／66.122%</td><td>39.545%</td><td>15.261%</td></tr>
-    </tbody>
-  </table></div>
-  <p class="note">任务 1,000 件、留出判决 249 件、直接询问 498 题，另有七类通用能力评估。DT 的片段重现下降，任务 micro-F1 较 b1 低 7.51 个百分点。<a href="https://arxiv.org/abs/2202.00443">TAB</a> 官方测试另外验证直接识别资讯识别。法律 9B 扩展已有对照纪录，和 v0.2.0 采不同模型配置。DT2 的通用能力仍待补齐。</p>
-</section>
 
 <section id="general">
   <h2>通用能力</h2>
