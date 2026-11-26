@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="dt-opd-map-revision" content="2026-11-26-medical">
+<title>DT-OPD 项目 · 医学研究</title>
+<link rel="canonical" href="https://project.juyujing.com/zh-CN.html">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: a lab notebook map. Thesis on top, then the six claims as a grid of verdict cards, then the experiment ledger per domain, then the open work. */
+:root{
+  --bg:#f6f7f5; --panel:#ffffff; --ink:#1b2321; --muted:#5b6763; --line:#d9dfdc;
+  --accent:#1f6f62; --accent-soft:#e2efec;
+  --ok:#2e7d4f; --ok-bg:#e3f2e8; --run:#8a6d00; --run-bg:#fbf1cf; --no:#a63a2c; --no-bg:#f8e1dd; --todo:#4f5d73; --todo-bg:#e6eaf1; --void:#6d6d6d; --void-bg:#ececec;
+  --display:"Space Grotesk","Noto Sans SC",system-ui,sans-serif; --body:"Noto Sans SC",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121816; --panel:#19211f; --ink:#e4ebe8; --muted:#9aa8a3; --line:#2c3633; --accent:#5fbfae; --accent-soft:#1d3531;
+  --ok:#7fd29d; --ok-bg:#1c3326; --run:#e8c75a; --run-bg:#3a3215; --no:#f09a8c; --no-bg:#3d211d; --todo:#a9b8d3; --todo-bg:#232c3b; --void:#b0b0b0; --void-bg:#2a2a2a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121816; --panel:#19211f; --ink:#e4ebe8; --muted:#9aa8a3; --line:#2c3633; --accent:#5fbfae; --accent-soft:#1d3531;
+  --ok:#7fd29d; --ok-bg:#1c3326; --run:#e8c75a; --run-bg:#3a3215; --no:#f09a8c; --no-bg:#3d211d; --todo:#a9b8d3; --todo-bg:#232c3b; --void:#b0b0b0; --void-bg:#2a2a2a; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.65}
+.wrap{max-width:1120px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:40px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2}
+h2{font-size:22px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+h2 small{font-family:var(--body);font-size:13px;color:var(--muted);font-weight:400}
+h3{font-size:16px}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+header{display:grid;gap:14px}
+.thesis{max-width:70ch;color:var(--muted)}
+.thesis b{color:var(--ink)}
+.meta{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.ok{color:var(--ok);background:var(--ok-bg)} .run{color:var(--run);background:var(--run-bg)} .no{color:var(--no);background:var(--no-bg)} .todo{color:var(--todo);background:var(--todo-bg)} .void{color:var(--void);background:var(--void-bg)}
+.claims{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.claim{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:10px;align-content:start;min-width:0}
+.claim .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.claim .id{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.claim dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13.5px}
+.claim dt{color:var(--muted);white-space:nowrap}
+.claim dd{margin:0;min-width:0}
+.dim{font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:1px 6px;border:1px solid var(--line);border-radius:4px;color:var(--muted)}
+section{display:grid;gap:16px}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:36rem;font-size:13.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:500;color:var(--muted);font-size:12.5px;background:var(--accent-soft)}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.hl td{background:color-mix(in srgb,var(--accent-soft) 55%,transparent)}
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.lv{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:grid;gap:2px;font-size:13px}
+.lv b{font-family:var(--display);font-size:15px;color:var(--accent)}
+.lv span{color:var(--muted)}
+.lvkey b{color:var(--ink)}
+table.bar{table-layout:fixed;min-width:880px}
+table.bar td{font-size:13px}
+table.bar td small{font-family:var(--mono);color:var(--muted)}
+table.bar .pill{white-space:normal}
+.ev{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+.note{font-size:13px;color:var(--muted);max-width:90ch}
+.weak{color:var(--muted)}
+th.weak,td.weak{background:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in srgb,var(--line) 45%,transparent) 6px 7px)}
+.tag{font-family:var(--mono);font-size:10.5px;padding:0 5px;border:1px solid var(--line);border-radius:4px;color:var(--muted);margin-left:4px;white-space:nowrap}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:10px;min-width:0}
+ol,ul{margin:0;padding-left:20px;display:grid;gap:6px}
+li{font-size:14px}
+code{font-family:var(--mono);font-size:12.5px}
+
+body{margin:0}
+.wrap{grid-template-columns:minmax(0,1fr)}
+main{display:grid;gap:40px;min-width:0}
+main>section{min-width:0;scroll-margin-top:16px}
+nav a{padding:4px 8px}
+a{color:var(--accent);text-underline-offset:3px}
+a:focus-visible,.scroll:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.claim p,.box p{font-size:14px}
+.claim .pill,.box>.pill{justify-self:start}
+tbody th{font-size:inherit;color:var(--ink);background:transparent}
+tbody td{font-variant-numeric:tabular-nums}
+@media(max-width:480px){.wrap,main{gap:28px}.wrap{padding-top:24px}.box,.claim{padding:14px}}
+figure{margin:0}figure img{display:block;width:100%;height:auto;border-radius:10px;border:1px solid var(--line)}figcaption{margin-top:8px}details>summary{cursor:pointer;font-weight:700;color:var(--accent)}.appendix{display:grid;gap:32px;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<span class="eyebrow">Dual-Teacher OPD · <time datetime="2026-11-26">2026-11-26</time></span>
+<h1>DT-OPD 项目 · 医学研究</h1>
+<p class="thesis">医学实验比较能力教师能教会学生多少医学知识，以及边界教师能否额外降低有害回应、避免误拒正当请求。密钥授权与合成病历隐私另用各自的数据与指标。</p>
+<nav aria-label="页面导览" class="legend"><a href="#pipeline">模型架构</a><a href="#medicine">医学结果与基线</a><a href="#boundaries">授权与病历隐私</a><a href="#timeline">年底时程</a><a href="#appendix">其他领域</a><a href="./" lang="zh-TW" hreflang="zh-TW">繁體中文</a></nav>
+</header>
+<main>
+<section id="pipeline">
+<h2>医疗伦理 DT-OPD 架构</h2>
+<figure><a href="/dt-opd-medical-architecture.zh-CN.svg"><img src="/dt-opd-medical-architecture.zh-CN.svg" width="1600" height="1010" alt="DT-OPD 医学架构图，显示学生生成、双教师、审查与修复、损失更新，以及学生独立推论"></a><figcaption class="note">Claude 绘制。点图可放大。三类医学边界各用自己的数据与评估指标。</figcaption></figure>
+<p>学生先生成回答。冻结的能力教师提供逐词元分布，冻结的边界教师回答同一请求。当边界教师拒答而学生作答，审查器将该样本送往修复路径。合规样本使用正向与反向 KL 各半的能力损失。激活修复目标时，越界样本跳过能力损失，改用边界教师的两种上下文评分差与修正版的负对数似然。PID 依有害请求中的越界比例调整边界权重（预算 5%，权重下限 1.0）。训练只更新学生，推论由学生独立完成。</p>
+<h3>学生、教师与脱机知识蒸馏（KD）</h3>
+<div class="scroll" tabindex="0"><table><thead><tr><th>实验</th><th>学生</th><th>能力教师</th><th>边界教师</th><th>脱机 KD</th><th>进度</th></tr></thead><tbody>
+<tr><th>A 线 b1／DT</th><td>MedAlpaca-7B</td><td>Llama-2-70B-chat</td><td>b1 无；DT 为 MedAlpaca-7B＋MSB 安全微调</td><td>无</td><td>已实测</td></tr>
+<tr><th>A 线基座对照</th><td>MedAlpaca-7B</td><td>Llama-2-70B 基座</td><td>b1 无；DT 沿用 A 线边界教师</td><td>无</td><td>已调度</td></tr>
+<tr><th>B 线 b1／DT</th><td>Qwen3.5-9B-Base</td><td>Qwen3.8-27B</td><td>b1 无；DT 为 Qwen3.5-9B-Base＋MSB 安全微调</td><td>无</td><td>11/26 纪录中 b1 已到 50／112 步，DT 已调度</td></tr>
+<tr><th>B 线基座对照</th><td>Qwen3.5-9B-Base</td><td>Qwen3.5-35B-A3B-Base</td><td>b1 无；DT 沿用 B 线边界教师</td><td>无</td><td>已调度；先测量教师</td></tr>
+<tr><th>密钥授权 DT</th><td>Llama-3-8B-Instruct</td><td>Llama-3-8B-Instruct＋医学 SFT</td><td>dt-repair 采密钥规则（配 Llama-3-8B-Instruct）；dt-learned 采复现的 SudoLM 权重</td><td>无</td><td>300 步已完成</td></tr>
+<tr><th>病历隐私 DT</th><td>Qwen3.5-2B</td><td>Qwen3.5-9B＋MultiMedQA 与合成病历 SFT</td><td>以其他患者病历调校的识别信息审查者，搭配未接触目标病历的 Qwen3.5-9B 评分者</td><td>无（规划）</td><td>数据已备</td></tr>
+</tbody></table></div>
+<p class="note">b1 是单教师在线蒸馏对照。MSB 安全微调与 SudoLM 复现各自训练基线权重，可直接评估或作为指定组别的边界教师。</p>
+</section>
+<section id="medicine">
+<h2>医疗伦理 · 医学能力与有害回应</h2>
+<p>MedSafetyBench（MSB）含 900 条训练样本与 900 条有害测试请求。测试题由 GPT-4 与 Llama-2 各出 450 条。本案以 Qwen3.8-27B 评审回答有害度（1–5，越低越好），并测量四项医学能力（准确率 %）。<br><a href="https://arxiv.org/abs/2403.03744">MedSafetyBench 原文</a></p>
+<h3>B 线 · 统一学生与方法对照</h3>
+<div class="scroll" tabindex="0"><table><thead><tr><th>模型</th><th>MSB GPT-4 ↓</th><th>MSB Llama-2 ↓</th><th>MedQA</th><th>MedMCQA</th><th>PubMedQA</th><th>MMLU-Med</th></tr></thead><tbody>
+<tr><th>Qwen3.5-9B-Base</th><td>1.39</td><td>1.11</td><td>73.6</td><td>66.1</td><td>78.0</td><td>85.3</td></tr>
+<tr class="hl"><th>同学生＋MSB 安全微调</th><td>1.00</td><td>1.00</td><td>73.2</td><td>65.8</td><td>77.8</td><td>85.3</td></tr>
+<tr><th>Qwen3.8-27B 能力教师</th><td>1.02</td><td>1.01</td><td>83.4</td><td>69.2</td><td>73.0</td><td>88.5</td></tr>
+<tr><th>SafeMed-R1 作者权重（Qwen3-32B＋SFT＋GRPO）</th><td>1.16</td><td>1.14</td><td>75.4</td><td>68.7</td><td>73.8</td><td>87.1</td></tr>
+</tbody></table></div>
+<p>MSB 安全微调已达有害度下限，医学能力较原学生降低 0–0.4 个百分点，仍须测量相近正当请求的误拒。Qwen3.8-27B 也接近下限，因此增列未经安全对齐的 Qwen3.5-35B-A3B-Base，比较固定教师下 b1 与 DT 的增量效果，并记录审查器触发率。</p>
+<p>SafeMed-R1 作者权重的有害度为初测值。30 则回答因评审生成上限而漏计，且漏计样本较倾向服从有害请求，初测分数偏低。评审已加入以较长上限补评的流程，修订分数待出。原文三评审平均为 Qwen3-32B 基座 1.33、SafeMed-R1 1.10，采另一评估口径。公开权重已重测；以 Qwen3.5-9B-Base 复现 SFT＋GRPO 方法已通过本机端到端与续跑测试，已调度。以 Qwen3.8-27B 产生训练数据，分别评估 SFT 与 SFT＋GRPO；正式结果待验。统一比较共五臂：原学生、MSB 安全微调、SafeMed-R1 式 SFT＋GRPO、b1、DT。<br><a href="https://arxiv.org/abs/2605.28338">SafeMed-R1 原文</a> · <a href="https://huggingface.co/OpenMedZoo/SafeMed-R1">作者权重</a></p>
+<p class="note">B 线、Qwen3.8-27B 与作者权重的数值来自 2026-11-26 Experiment 运行输出，待导出逐题结果后再验收。</p>
+<h3>A 线 · MedSafetyBench 文献复现</h3>
+<div class="scroll" tabindex="0"><table><thead><tr><th>模型</th><th>有害度 ↓</th><th>MedQA</th><th>MedMCQA</th><th>PubMedQA</th><th>MMLU-Med</th></tr></thead><tbody>
+<tr><th>MedAlpaca-7B 原学生</th><td>2.053</td><td>41.3</td><td>35.8</td><td>37.2</td><td>60.0</td></tr>
+<tr><th>同学生＋MSB 安全微调（本案复现）</th><td>1.047</td><td>41.5</td><td>36.0</td><td>33.2</td><td>59.4</td></tr>
+<tr><th>Llama-2-70B-chat 能力教师</th><td>1.004</td><td>50.7</td><td>43.7</td><td>60.8</td><td>62.7</td></tr>
+<tr><th>b1 单教师</th><td>1.000</td><td>38.2</td><td>33.4</td><td>13.4</td><td>52.2</td></tr>
+<tr><th>DT 双教师</th><td>1.000</td><td>37.6</td><td>34.2</td><td>27.2</td><td>56.4</td></tr>
+</tbody></table></div>
+<p>两组都到有害度下限，训练期间修复触发为零，这轮无法估计边界教师的增益。两组四项能力均低于原学生。改用逐选项精确对数几率重算后，表中能力分数一致。评审已加入结果缓存，作者权重评估另加入指定提示词与作答片段抽取。</p>
+</section>
+<section id="boundaries">
+<h2>医学延伸 · 密钥授权与病历隐私</h2>
+<div class="cols">
+<article class="box"><h3>SudoLM · 密钥授权</h3><p>复现组、dt-repair、dt-learned 的访问控制 F1 依序为 0.8334、0.7872、0.8375；医学正确率依序为 25.84%、13.97%、10.08%。dt-learned 拒答 99.73% 的无密钥公开题。复现组对这批公开题全数拒答。公开题有密钥对照及详答级判读待补。</p><p><a href="https://arxiv.org/abs/2410.14676">SudoLM 原文</a></p></article>
+<article class="box"><h3>Synthea · 合成病历隐私</h3><p>已备 1,145 位合成病人、70,548 条教师样本，其中 39,870 条含构造秘密。搭配 MultiMedQA，按病人留出，分别测量识别信息泄漏、授权回答与一般医学能力。端到端训练待启动。</p><p><a href="https://synthetichealth.github.io/synthea/">Synthea</a> · <a href="https://arxiv.org/abs/2212.13138">MultiMedQA</a></p></article>
+</div>
+</section>
+<section id="timeline">
+<h2>医学对照实验时程 <small>2026 年，目标日期</small></h2>
+<div class="scroll" tabindex="0"><table><thead><tr><th>时间</th><th>对照设计</th><th>验收产物</th></tr></thead><tbody>
+<tr><th>11/26–12/04</th><td>完成 B 线 Qwen3.8-27B 的 b1／DT；测量新基座教师。A 线维持同学生，改用 Llama-2-70B 基座重跑 b1／DT。</td><td>固定题集与评审的有害度、四项医学能力、审查器触发率。</td></tr>
+<tr><th>12/05–12/11</th><td>B 线同一学生、能力教师与训练数据下，比较新基座教师的 b1／DT。检查审查器是否实际介入，并分辨单教师与修复路径的能力代价。</td><td>配对差值、逐题输出与修复统计。</td></tr>
+<tr><th>12/12–12/18</th><td>用统一学生完成 SafeMed-R1 式 SFT＋GRPO；补评作者权重漏计的 30 则回答。汇总五臂。</td><td>同场总表、选项计分及生成评估口径、缺失答案处理。</td></tr>
+<tr><th>12/19–12/25</th><td>加入相近的正当医学请求测误拒。补齐 SudoLM 公开题有／无密钥对照。</td><td>有害回应率、误拒率及授权答复正确率并列。</td></tr>
+<tr><th>12/26–12/31</th><td>试跑 Synthea＋MultiMedQA，以留出病人比较原学生、b1 和 DT。整理重跑与未完成项。</td><td>病历泄漏、医学能力与授权指标；年底核查表及逐题结果。</td></tr>
+</tbody></table></div>
+</section>
+<details id="appendix"><summary>补充 · 研究主张、代码、法律与通用能力</summary><div class="appendix">
+<p><a href="/dt-opd/lab/">词元蒸馏实验台</a></p>
+<section id="claims">
+  <h2>研究主张</h2>
+  <div class="claims">
+    <article class="claim"><h3>C1 · 既有秘密抑制与继承预防</h3><p>代码已观察到既有秘密重现下降。ECHR 有留出案件的泄漏下降证据。干净学生的继承预防需逐题确认教师已记住、初始学生未记住，再比较 s0、b1、DT。</p><span class="pill run">继承预防待验</span></article>
+    <article class="claim"><h3>C2 · 边界下的能力保留</h3><p>未经 KD 的 Coder-7B 双教师组在 MBPP／MBPP+ 接近同基座。ECHR 任务 F1 和 TOFU 的数学推理、指令遵循呈现不同代价。</p><span class="pill run">部分支持</span></article>
+    <article class="claim"><h3>C3 · 能力接近教师</h3><p>一般版 Qwen2.5-7B 的 KD 预热与后续 OPD 未达 Coder-32B 的代码能力。MBPP、CRUXEval 显示单教师已有退化，DT 在 CRUXEval-I 再下降。</p><span class="pill no">未达标</span></article>
+    <article class="claim"><h3>C4 · 与文献基线同场比较</h3><p>代码已有同基座 CodeEraser 对照。法律依能力与隐私协议分开参照。医疗伦理的统一五臂与误拒比较待完成。</p><span class="pill run">部分验收</span></article>
+    <article class="claim"><h3>C5 · 边界教师的识别能力</h3><p>TAB 与 CredData 提供审查器的识别能力证据。端到端学生评估仍需分别检查能力、越界与误拒。</p><span class="pill ok">指定评估集已验收</span></article>
+    <article class="claim"><h3>C6 · 跨种子与规模稳健性</h3><p>本页主要对照采 seed 42。关键比较仍需多种子、信赖区间与跨规模验证。</p><span class="pill todo">待调度</span></article>
+  </div>
+</section>
+
+<section id="code">
+  <h2>代码</h2>
+  <h3>代码能力主结果（%）</h3>
+  <div class="scroll" role="region" tabindex="0" aria-label="代码能力主结果（%）"><table>
+    <thead><tr><th scope="col">实验组</th><th scope="col">MBPP／MBPP+ ↑</th><th scope="col">CRUXEval-I／O ↑</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">CodeEraser γ=0.5 复现</th><td>75.9–78.6／63.2–64.6</td><td>54.75–57.25／56.12–57.12</td></tr>
+      <tr><th scope="row">Coder-7B 基座重测</th><td>77.5／63.8</td><td>58.25／57.62</td></tr>
+      <tr><th scope="row">Coder-7B → DT</th><td>77.2／63.2</td><td>—</td></tr>
+      <tr><th scope="row">s0</th><td>77.2／63.8</td><td>51.50／48.25</td></tr>
+      <tr><th scope="row">b1（未用离线 KD）</th><td>—</td><td>52.12／46.1</td></tr>
+      <tr><th scope="row">DT（未用离线 KD）</th><td>—</td><td>50.00／47.0</td></tr>
+      <tr><th scope="row">KD 预热</th><td>74.3／60.3</td><td>53.38／46.62</td></tr>
+      <tr><th scope="row">KD → b1</th><td>70.1／57.9</td><td>49.62／42.12</td></tr>
+      <tr><th scope="row">KD → DT</th><td>69.0／56.6</td><td>45.75／42.25</td></tr>
+      <tr><th scope="row">Qwen2.5-Coder-32B 能力教师，项目实测</th><td>85.2／70.4</td><td>61.75／70.00</td></tr>
+      <tr><th scope="row">Qwen2.5-Coder-32B 官方技术报告（教师参照）</th><td>83.0／68.2</td><td>62.5／69.4</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">MBPP／MBPP+ 为 EvalPlus 378 题；CRUXEval 使用 800 题与思维链提示，I 预测输入，O 预测输出。两者均采用贪婪解码。破折号表示缺乏可核对的判分结果。Coder-7B 双教师组已有 CRUXEval 和 BigCodeBench 生成记录，判分尚未验收。教师官方分数供参照。 <a href="https://arxiv.org/abs/2411.10323">Qwen2.5-Coder</a> · <a href="https://github.com/evalplus/evalplus">EvalPlus</a> · <a href="https://github.com/facebookresearch/cruxeval">CRUXEval</a></p>
+  <p>一般版 Qwen2.5-7B 从 s0 到 KD 预热再到 b1，MBPP 依次为 77.2 → 74.3 → 70.1；CRUXEval-O 为 48.25 → 46.62 → 42.12。单教师已出现退化。相较 b1，DT 的 MBPP／MBPP+ 再低 1.1／1.3 个百分点，CRUXEval-I 低 3.87，O 高 0.13。单种子仍不足以排除边界教师的额外代价。Coder-7B 未经 KD 的双教师组在 MBPP／MBPP+ 仅比同基座低 0.3／0.6 个百分点。</p>
+  <h3>学生、教师与预热设置</h3>
+  <div class="scroll" role="region" tabindex="0" aria-label="学生、教师与预热设置"><table>
+    <thead><tr><th scope="col">实验组</th><th scope="col">学生起点</th><th scope="col">能力教师</th><th scope="col">边界教师</th><th scope="col">KD</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">CodeEraser 原文</th><td>Qwen2.5-Coder-7B</td><td>无</td><td>无</td><td>无</td></tr>
+      <tr><th scope="row">CodeEraser γ=0.5 复现</th><td>Qwen2.5-Coder-7B</td><td>无</td><td>无</td><td>无</td></tr>
+      <tr><th scope="row">Coder-7B 基座重测</th><td>Qwen2.5-Coder-7B</td><td>无</td><td>无</td><td>无</td></tr>
+      <tr><th scope="row">Coder-7B → DT</th><td>Qwen2.5-Coder-7B</td><td>Qwen2.5-Coder-7B（冻结）</td><td>程序化 secret-mask</td><td>无</td></tr>
+      <tr><th scope="row">s0</th><td>Qwen2.5-7B</td><td>无</td><td>无</td><td>无</td></tr>
+      <tr><th scope="row">KD 预热</th><td>Qwen2.5-7B</td><td>Qwen2.5-Coder-32B</td><td>无</td><td>有，离线 top-20</td></tr>
+      <tr><th scope="row">KD → b1</th><td>Qwen2.5-7B</td><td>Qwen2.5-Coder-32B</td><td>无</td><td>有，离线 top-20</td></tr>
+      <tr><th scope="row">KD → DT</th><td>Qwen2.5-7B</td><td>Qwen2.5-Coder-32B</td><td>程序化 secret-mask</td><td>有，离线 top-20</td></tr>
+      <tr><th scope="row">Coder-7B → KD（已启动，待验收）</th><td>Qwen2.5-Coder-7B</td><td>Qwen2.5-Coder-32B</td><td>无</td><td>有，离线 top-20</td></tr>
+      <tr><th scope="row">Coder-7B → KD → b1（待验收）</th><td>Qwen2.5-Coder-7B</td><td>Qwen2.5-Coder-32B</td><td>无</td><td>有，离线 top-20</td></tr>
+      <tr><th scope="row">Coder-7B → KD → DT（待验收）</th><td>Qwen2.5-Coder-7B</td><td>Qwen2.5-Coder-32B</td><td>程序化 secret-mask</td><td>有，离线 top-20</td></tr>
+      <tr><th scope="row">b1（未用离线 KD）</th><td>Qwen2.5-7B</td><td>Qwen2.5-Coder-32B</td><td>无</td><td>无</td></tr>
+      <tr><th scope="row">DT（未用离线 KD）</th><td>Qwen2.5-7B</td><td>Qwen2.5-Coder-32B</td><td>程序化 secret-mask</td><td>无</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">b1 是单教师 OPD，DT 是双教师 OPD。原有 Coder-7B 双教师组使用同基座的冻结能力教师；新实验改用 Coder-32B，先做离线 KD，再从同一预热权重分出 b1 与 DT，沿用 MBPP／MBPP+、CRUXEval 与秘密重现的评估。已核到预热载入教师分布并开始运算，尚无可验收的预热或后续对照结果。</p>
+  <h3>秘密重现（%）</h3>
+  <div class="scroll" role="region" tabindex="0" aria-label="秘密重现（%）"><table>
+    <thead><tr><th scope="col">实验组</th><th scope="col">遗忘集 MA ↓</th><th scope="col">遗忘集 EL₁₀ ↓</th><th scope="col">保留集 MA</th><th scope="col">保留集 EL₁₀</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">CodeEraser 原文</th><td>8.49</td><td>3.68</td><td>—</td><td>—</td></tr>
+      <tr><th scope="row">CodeEraser γ=0.5 复现</th><td>34.17</td><td>5.97</td><td>—</td><td>—</td></tr>
+      <tr><th scope="row">Coder-7B 基座重测</th><td>97.48</td><td>85.53</td><td>92.67</td><td>81.77</td></tr>
+      <tr><th scope="row">Coder-7B → DT</th><td>0.19</td><td>0.08</td><td>92.05</td><td>74.82</td></tr>
+      <tr><th scope="row">s0</th><td>95.18</td><td>79.55</td><td>91.41</td><td>76.58</td></tr>
+      <tr><th scope="row">KD → b1</th><td>93.19</td><td>75.88</td><td>—</td><td>—</td></tr>
+      <tr><th scope="row">KD → DT</th><td>0.181</td><td>0.00</td><td>—</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">遗忘集是应抑制的片段，MA 衡量记忆准确度，EL₁₀ 衡量十 token 片段的重现。保留集是未列入遗忘目标的片段，用来观察抑制是否外溢。Coder-7B → DT 的保留集 EL₁₀ 下降 6.95 个百分点，显示重现也有下降。表中遗忘集为五组等权平均。原文与本案重建的样本有差异。两种学生基座起始都已有大量片段记忆，这组结果支持既有秘密抑制，干净学生的继承对照仍需另验。 <a href="https://arxiv.org/abs/2509.13755">CodeEraser</a></p>
+  <details><summary>HumanEval 协议对照（补充结果）</summary>
+  <h3>HumanEval（%）</h3>
+  <div class="scroll" role="region" tabindex="0" aria-label="HumanEval（%）"><table>
+    <thead><tr><th scope="col">实验组</th><th scope="col">BigCode 采样 pass@1</th><th scope="col">EvalPlus 贪婪 HumanEval／HumanEval+</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">CodeEraser 原文</th><td>61.65</td><td>—</td></tr>
+      <tr><th scope="row">CodeEraser γ=0.5 复现</th><td>60.49</td><td>57.3–61.6／48.8–54.3</td></tr>
+      <tr><th scope="row">Coder-7B 基座重测</th><td>61.05</td><td>62.2／53.7</td></tr>
+      <tr><th scope="row">Coder-7B → DT</th><td>55.34</td><td>57.9／50.6</td></tr>
+      <tr><th scope="row">s0</th><td>11.52</td><td>57.3／50.0</td></tr>
+      <tr><th scope="row">KD 预热</th><td>—</td><td>53.7／47.0</td></tr>
+      <tr><th scope="row">KD → b1</th><td>45.24</td><td>49.4／40.9</td></tr>
+      <tr><th scope="row">KD → DT</th><td>45.02</td><td>47.0／40.9</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">164 题。BigCode 每题采样 50 次，EvalPlus 每题贪婪生成一次。一般版 s0 在两套协议差达 45.78 个百分点，而且旧采样未保存生成文本，原因尚未验证。采样分数只供 CodeEraser 协议对照，HumanEval+ 仍提供同条件的补充证据。</p>
+  </details>
+  <div class="cols"><article class="box"><h3>CodeEraser 前沿基座</h3><p><span class="pill run">重建与校准中</span> 以 Qwen3.5-9B-Base 重建记忆门槛，配合 Qwen3.8-27B 筛选「教师记住、学生未记住」的样本。CredData 的 Qwen3.5-9B → 2B 迁移另行验收。</p></article></div>
+</section>
+
+<section id="law">
+  <h2>法律 ECHR <small>v0.2.0 已验收</small></h2>
+  <div class="scroll" role="region" tabindex="0" aria-label="法律能力与泄漏比较"><table>
+    <thead><tr><th scope="col">模型与来源</th><th scope="col">ECtHR A micro／macro-F1 ↑</th><th scope="col">留出案件片段重现 ↓</th><th scope="col">直接姓名重现 ↓</th></tr></thead>
+    <tbody>
+      <tr><th scope="row"><a href="https://arxiv.org/abs/2110.00976">LexGLUE 论文参照</a></th><td>ECtHR A 原始基线</td><td>—</td><td>—</td></tr>
+      <tr><th scope="row"><a href="https://arxiv.org/abs/2302.00539">Lukas 等，隐私文献</a></th><td>原文采困惑度</td><td colspan="2">原文采 GPT-2 无条件抽取协议，另行对照</td></tr>
+      <tr><th scope="row">Qwen3-1.7B s0，项目</th><td>17.651／15.823%</td><td>0.557%</td><td>0.000%</td></tr>
+      <tr><th scope="row">b1，项目</th><td>56.585／41.964%</td><td>1.595%</td><td>1.205%</td></tr>
+      <tr class="hl"><th scope="row">DT，项目</th><td>49.074／35.235%</td><td>0.018%</td><td>0.000%</td></tr>
+      <tr><th scope="row">Qwen3-8B 能力教师，项目</th><td>70.995／66.122%</td><td>39.545%</td><td>15.261%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">任务 1,000 件、留出判决 249 件、直接询问 498 题，另有七类通用能力评估。DT 的片段重现下降，任务 micro-F1 较 b1 低 7.51 个百分点。<a href="https://arxiv.org/abs/2202.00443">TAB</a> 官方测试另外验证直接识别资讯识别。法律 9B 扩展已有对照纪录，和 v0.2.0 采不同模型配置。DT2 的通用能力仍待补齐。</p>
+</section>
+
+<section id="general">
+  <h2>通用能力</h2>
+  <h3>代码实验的通用能力（%，未用离线 KD）</h3>
+  <div class="scroll" role="region" tabindex="0" aria-label="代码实验的通用能力（%，未用离线 KD）"><table>
+    <thead><tr><th scope="col">模型与来源</th><th scope="col">MMLU</th><th scope="col">ARC-C</th><th scope="col">TruthfulQA MC2</th><th scope="col">GSM8K</th><th scope="col">TriviaQA</th><th scope="col">BBH</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">CodeEraser 原文</th><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><th scope="row">CodeEraser 复现，五组范围</th><td>67.9–68.2</td><td>43.7–44.5</td><td>50.8–51.0</td><td>79.3–81.6</td><td>49.3–51.0</td><td>66.0–68.5</td></tr>
+      <tr><th scope="row">Qwen2.5-Coder-32B 能力教师，项目实测</th><td>79.0</td><td>53.6</td><td>54.4</td><td>85.8</td><td>63.6</td><td>78.5</td></tr>
+      <tr><th scope="row">s0（Qwen2.5-7B）</th><td>74.3</td><td>48.0</td><td>56.5</td><td>81.4</td><td>60.0</td><td>69.0</td></tr>
+      <tr><th scope="row">b1（Qwen2.5-7B + Coder-32B）</th><td>72.9</td><td>—</td><td>—</td><td>78.7</td><td>57.0</td><td>66.6</td></tr>
+      <tr><th scope="row">DT（Qwen2.5-7B + Coder-32B + secret-mask）</th><td>73.4</td><td>49.2</td><td>51.7</td><td>78.5</td><td>57.6</td><td>66.0</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">来源为 11 月 24 日 Claude Code Experiment 实验汇报。这批分数对应未做离线 KD 的 Qwen2.5-7B 权重。DT 的 MMLU、GSM8K、TriviaQA 与 BBH 都低于 s0。CodeEraser 复现使用 Coder-7B，跨基座差异不能归因于蒸馏。破折号表示来源没有可核对结果。</p>
+  <h3>法律 ECHR v0.2.0（%，seed 42）</h3>
+  <div class="scroll" role="region" tabindex="0" aria-label="法律 ECHR v0.2.0（%，seed 42）"><table>
+    <thead><tr><th scope="col">测试</th><th scope="col">s0 (Qwen3-1.7B)</th><th scope="col">b1</th><th scope="col">DT</th><th scope="col">C-full-mem (Qwen3-8B)</th><th scope="col">Qwen3-8B</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">MMLU</th><td>60.18</td><td>59.22</td><td>59.24</td><td>73.00</td><td>74.94</td></tr>
+      <tr><th scope="row">ARC-C</th><td>39.59</td><td>39.08</td><td>41.89</td><td>54.27</td><td>55.46</td></tr>
+      <tr><th scope="row">TruthfulQA MC1</th><td>29.25</td><td>28.27</td><td>32.56</td><td>33.54</td><td>36.47</td></tr>
+      <tr><th scope="row">TruthfulQA MC2</th><td>45.91</td><td>43.83</td><td>47.06</td><td>50.08</td><td>54.40</td></tr>
+      <tr><th scope="row">GSM8K</th><td>70.28</td><td>64.59</td><td>68.76</td><td>83.02</td><td>82.26</td></tr>
+      <tr><th scope="row">IFEval prompt strict</th><td>66.91</td><td>36.78</td><td>45.29</td><td>72.09</td><td>81.33</td></tr>
+      <tr><th scope="row">IFEval instruction strict</th><td>75.30</td><td>50.12</td><td>56.47</td><td>80.10</td><td>87.41</td></tr>
+      <tr><th scope="row">TriviaQA exact match</th><td>30.49</td><td>29.39</td><td>29.40</td><td>46.34</td><td>56.40</td></tr>
+      <tr><th scope="row">TriviaQA alias in reply</th><td>32.81</td><td>32.24</td><td>32.36</td><td>53.91</td><td>59.63</td></tr>
+      <tr><th scope="row">TriviaQA withheld</th><td>0.01</td><td>0.03</td><td>0.04</td><td>0.01</td><td>0.02</td></tr>
+      <tr><th scope="row">BBH CoT</th><td>47.29</td><td>56.49</td><td>58.58</td><td>73.54</td><td>80.60</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">b1 与 DT 从 Qwen3-1.7B 起步，使用 Qwen3-8B 的 C-full-mem 能力教师。b1 无边界教师，DT 的边界教师由法律调优审查者与干净 Qwen3-8B 评分者组成。此对照未做离线 KD 预热。相较 s0，两个学生的 IFEval 均下降。DT 高于 b1，GSM8K 仍低于 s0。</p>
+  <h3>TOFU 阶段 1（%，学生三种子平均）</h3>
+  <div class="scroll" role="region" tabindex="0" aria-label="TOFU 阶段 1（%，学生三种子平均）"><table>
+    <thead><tr><th scope="col">测试</th><th scope="col">Qwen3-8B</th><th scope="col">C-full</th><th scope="col">C-clean</th><th scope="col">s0</th><th scope="col">clean</th><th scope="col">b1</th><th scope="col">p1</th><th scope="col">raw</th><th scope="col">DT</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">MMLU</th><td>74.9</td><td>74.1</td><td>74.5</td><td>60.3</td><td>59.9</td><td>60.0</td><td>59.7</td><td>59.5</td><td>58.6 (58.1–59.0)</td></tr>
+      <tr><th scope="row">ARC-C</th><td>56.4</td><td>55.1</td><td>54.5</td><td>43.1</td><td>45.7</td><td>46.4</td><td>45.2</td><td>42.9</td><td>43.7</td></tr>
+      <tr><th scope="row">TruthfulQA MC1</th><td>36.5</td><td>33.3</td><td>32.6</td><td>29.1</td><td>30.3</td><td>29.3</td><td>29.2</td><td>31.9</td><td>31.3</td></tr>
+      <tr><th scope="row">TruthfulQA MC2</th><td>54.4</td><td>49.9</td><td>49.5</td><td>45.9</td><td>45.9</td><td>43.9</td><td>45.3</td><td>49.0</td><td>47.3</td></tr>
+      <tr><th scope="row">GSM8K</th><td>82.3</td><td>83.3</td><td>83.7</td><td>69.5</td><td>60.6</td><td>63.6 (63.0–64.4)</td><td>58.7</td><td>60.5 (60.3–60.8)</td><td>52.5 (50.9–55.3)</td></tr>
+      <tr><th scope="row">TriviaQA EM</th><td>56.4</td><td>48.3</td><td>48.8</td><td>30.5</td><td>25.9</td><td>25.8</td><td>25.4</td><td>26.0</td><td>23.7 (23.1–24.1)</td></tr>
+      <tr><th scope="row">TriviaQA 别名命中</th><td>59.6</td><td>53.9</td><td>54.2</td><td>32.8</td><td>30.5</td><td>30.4</td><td>30.0</td><td>30.4</td><td>29.1</td></tr>
+      <tr><th scope="row">TriviaQA 拒答率 ↓</th><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.1</td><td>0.1</td><td>0.1</td><td>1.4 (0.5–2.4)</td><td>4.8 (4.2–5.4)</td></tr>
+      <tr><th scope="row">BBH CoT</th><td>80.6</td><td>79.3</td><td>78.9</td><td>47.3</td><td>59.6</td><td>59.8</td><td>58.6</td><td>58.8</td><td>59.3</td></tr>
+      <tr><th scope="row">IFEval prompt strict</th><td>83.2</td><td>69.9</td><td>75.4</td><td>68.6</td><td>42.7</td><td>39.8 (39.2–41.0)</td><td>39.6</td><td>42.3</td><td>32.8 (27.4–39.9)</td></tr>
+      <tr><th scope="row">IFEval inst strict</th><td>88.7</td><td>78.3</td><td>82.3</td><td>76.3</td><td>55.2</td><td>53.0</td><td>51.7</td><td>55.4</td><td>45.8 (41.0–52.4)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">括号为 seed 41／42／43 的范围。TOFU 此轮使用 Qwen3-1.7B 学生，未做离线 KD 预热。s0 为未训练学生；clean 使用 C-clean，b1 与 p1 使用 C-full，p1 另将规则加入教师上下文。raw 与 DT 使用 C-full，边界教师由 Qwen3.8-27B 审查者与干净 Qwen3-8B 评分者组成，两组使用不同边界损失。b1 已出现 IFEval prompt strict 明显退化（68.6 → 39.8），DT 相对 b1 的 GSM8K 再降约 11 个百分点，TriviaQA 公开常识拒答率由 0.1% 增至 4.8%。BBH 与 TriviaQA 采用修正后的补全与计分。这两套通用结果各自属于法律与 TOFU 权重。代码 KD 系列在本页有领域能力实测，通用能力同场数字待核。</p>
+</section>
+
+</div></details>
+</main>
+</div>
+</body>
+</html>
