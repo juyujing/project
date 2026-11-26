@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="dt-opd-map-revision" content="2026-11-26-medical">
-<title>DT-OPD 專案 · 醫學研究</title>
+<meta name="dt-opd-map-revision" content="2026-11-26-medical-mainline">
+<title>DT-OPD · 醫療倫理與能力蒸餾</title>
 <link rel="canonical" href="https://project.juyujing.com/">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap">
 <style>
@@ -93,39 +93,38 @@ figure{margin:0}figure img{display:block;width:100%;height:auto;border-radius:10
 <div class="wrap">
 <header>
 <span class="eyebrow">Dual-Teacher OPD · <time datetime="2026-11-26">2026-11-26</time></span>
-<h1>DT-OPD 專案 · 醫學研究</h1>
-<p class="thesis">醫學實驗比較能力教師能教會學生多少醫學知識，以及邊界教師能否額外降低有害回應、避免誤拒正當請求。金鑰授權與合成病歷隱私另用各自的資料與指標。</p>
-<nav aria-label="頁面導覽" class="legend"><a href="#pipeline">模型架構</a><a href="#medicine">醫學結果與基線</a><a href="#boundaries">授權與病歷隱私</a><a href="#timeline">年底時程</a><a href="#appendix">其他領域</a><a href="/zh-CN.html" lang="zh-CN" hreflang="zh-CN">简体中文</a></nav>
+<h1>DT-OPD · 醫療倫理與能力蒸餾</h1>
+<p class="thesis">當未經安全對齊的能力教師提供蒸餾訊號時，學生會不會學到配合有害醫療請求的行為？本研究以 Qwen3.5-9B-Base 為統一學生，固定能力教師與評測條件，比較單教師 b1 與加入 MSB 邊界教師的雙教師 DT，並同時追蹤醫學能力。</p>
+<nav aria-label="頁面導覽" class="legend"><a href="#pipeline">模型架構</a><a href="#medicine">醫學結果與基線</a><a href="#timeline">年底時程</a><a href="#appendix">補充實驗</a><a href="/zh-CN.html" lang="zh-CN" hreflang="zh-CN">简体中文</a></nav>
 </header>
 <main>
 <section id="pipeline">
 <h2>醫療倫理 DT-OPD 架構</h2>
-<figure><a href="/dt-opd-medical-architecture.svg"><img src="/dt-opd-medical-architecture.svg" width="1600" height="1010" alt="DT-OPD 醫學架構圖，顯示學生生成、雙教師、審查與修復、損失更新，以及學生獨立推論"></a><figcaption class="note">Claude 繪製。點圖可放大。三類醫學邊界各用自己的資料與評估指標。</figcaption></figure>
+<figure><a href="/dt-opd-medical-architecture.svg"><img src="/dt-opd-medical-architecture.svg" width="1600" height="1010" alt="DT-OPD 醫學架構圖，顯示學生生成、雙教師、審查與修復、損失更新，以及學生獨立推論"></a><figcaption class="note">Claude 繪製架構，圖中列出醫療倫理主實驗的模型配置、訓練路由與評估條件。點圖可放大。</figcaption></figure>
 <p>學生先生成回答。凍結的能力教師提供逐詞元分布，凍結的邊界教師回答同一請求。當邊界教師拒答而學生作答，審查器將該樣本送往修復路徑。合規樣本使用正向與反向 KL 各半的能力損失。啟用修復目標時，越界樣本跳過能力損失，改用邊界教師的兩種上下文評分差與修正版的負對數似然。PID 依有害請求中的越界比例調整邊界權重（預算 5%，權重下限 1.0）。訓練只更新學生，推論由學生獨立完成。</p>
 <h3>學生、教師與離線知識蒸餾（KD）</h3>
 <div class="scroll" tabindex="0"><table><thead><tr><th>實驗</th><th>學生</th><th>能力教師</th><th>邊界教師</th><th>離線 KD</th><th>進度</th></tr></thead><tbody>
+<tr><th>MoE 主實驗 b1／DT</th><td>Qwen3.5-9B-Base</td><td>Qwen3.5-35B-A3B-Base</td><td>b1 無；DT 為 Qwen3.5-9B-Base＋MSB 安全微調</td><td>無</td><td>已排程；先量測教師</td></tr>
+<tr><th>已對齊教師對照 b1／DT</th><td>Qwen3.5-9B-Base</td><td>Qwen3.8-27B</td><td>b1 無；DT 為 Qwen3.5-9B-Base＋MSB 安全微調</td><td>無</td><td>b1 已完成，DT 待完成</td></tr>
 <tr><th>A 線 b1／DT</th><td>MedAlpaca-7B</td><td>Llama-2-70B-chat</td><td>b1 無；DT 為 MedAlpaca-7B＋MSB 安全微調</td><td>無</td><td>已實測</td></tr>
 <tr><th>A 線基座對照</th><td>MedAlpaca-7B</td><td>Llama-2-70B 基座</td><td>b1 無；DT 沿用 A 線邊界教師</td><td>無</td><td>已排程</td></tr>
-<tr><th>B 線 b1／DT</th><td>Qwen3.5-9B-Base</td><td>Qwen3.8-27B</td><td>b1 無；DT 為 Qwen3.5-9B-Base＋MSB 安全微調</td><td>無</td><td>11/26 紀錄中 b1 已到 50／112 步，DT 已排程</td></tr>
-<tr><th>B 線基座對照</th><td>Qwen3.5-9B-Base</td><td>Qwen3.5-35B-A3B-Base</td><td>b1 無；DT 沿用 B 線邊界教師</td><td>無</td><td>已排程；先量測教師</td></tr>
-<tr><th>金鑰授權 DT</th><td>Llama-3-8B-Instruct</td><td>Llama-3-8B-Instruct＋醫學 SFT</td><td>dt-repair 採金鑰規則（配 Llama-3-8B-Instruct）；dt-learned 採復現的 SudoLM 權重</td><td>無</td><td>300 步已完成</td></tr>
-<tr><th>病歷隱私 DT</th><td>Qwen3.5-2B</td><td>Qwen3.5-9B＋MultiMedQA 與合成病歷 SFT</td><td>以其他患者病歷調校的識別資訊審查者，搭配未接觸目標病歷的 Qwen3.5-9B 評分者</td><td>無（規劃）</td><td>資料已備</td></tr>
 </tbody></table></div>
-<p class="note">b1 是單教師線上蒸餾對照。MSB 安全微調與 SudoLM 復現各自訓練基線權重，可直接評估或作為指定組別的邊界教師。</p>
+<p class="note">b1 與 DT 都用學生自己生成的回答做線上策略蒸餾。DT 使用 MSB 安全微調所得的邊界教師。5% 是有害請求中的越界控制目標，實際越界率與修復觸發率須分別回報。</p>
 </section>
 <section id="medicine">
 <h2>醫療倫理 · 醫學能力與有害回應</h2>
 <p>MedSafetyBench（MSB）含 900 條訓練樣本與 900 條有害測試請求。測試題由 GPT-4 與 Llama-2 各出 450 條。本案以 Qwen3.8-27B 評審回答有害度（1–5，越低越好），並量測四項醫學能力（準確率 %）。<br><a href="https://arxiv.org/abs/2403.03744">MedSafetyBench 原文</a></p>
-<h3>B 線 · 統一學生與方法對照</h3>
+<h3>統一學生 · 已完成的對照結果</h3>
 <div class="scroll" tabindex="0"><table><thead><tr><th>模型</th><th>MSB GPT-4 ↓</th><th>MSB Llama-2 ↓</th><th>MedQA</th><th>MedMCQA</th><th>PubMedQA</th><th>MMLU-Med</th></tr></thead><tbody>
 <tr><th>Qwen3.5-9B-Base</th><td>1.39</td><td>1.11</td><td>73.6</td><td>66.1</td><td>78.0</td><td>85.3</td></tr>
 <tr class="hl"><th>同學生＋MSB 安全微調</th><td>1.00</td><td>1.00</td><td>73.2</td><td>65.8</td><td>77.8</td><td>85.3</td></tr>
 <tr><th>Qwen3.8-27B 能力教師</th><td>1.02</td><td>1.01</td><td>83.4</td><td>69.2</td><td>73.0</td><td>88.5</td></tr>
+<tr><th>b1-q35（Qwen3.8-27B 單教師）</th><td>1.04</td><td>1.02</td><td>67.0</td><td>61.6</td><td>79.0</td><td>82.2</td></tr>
 <tr><th>SafeMed-R1 作者權重（Qwen3-32B＋SFT＋GRPO）</th><td>1.16</td><td>1.14</td><td>75.4</td><td>68.7</td><td>73.8</td><td>87.1</td></tr>
 </tbody></table></div>
-<p>MSB 安全微調已達有害度下限，醫學能力較原學生降低 0–0.4 個百分點，仍須量測相近正當請求的誤拒。Qwen3.8-27B 也接近下限，因此增列未經安全對齊的 Qwen3.5-35B-A3B-Base，比較固定教師下 b1 與 DT 的增量效果，並記錄審查器觸發率。</p>
-<p>SafeMed-R1 作者權重的有害度為初測值。30 則回答因評審生成上限而漏計，且漏計樣本較傾向服從有害請求，初測分數偏低。評審已加入以較長上限補評的流程，修訂分數待出。原文三評審平均為 Qwen3-32B 基座 1.33、SafeMed-R1 1.10，採另一評估口徑。公開權重已重測；以 Qwen3.5-9B-Base 復現 SFT＋GRPO 方法已通過本機端到端與續跑測試，已排程。以 Qwen3.8-27B 產生訓練資料，分別評估 SFT 與 SFT＋GRPO；正式結果待驗。統一比較共五臂：原學生、MSB 安全微調、SafeMed-R1 式 SFT＋GRPO、b1、DT。<br><a href="https://arxiv.org/abs/2605.28338">SafeMed-R1 原文</a> · <a href="https://huggingface.co/OpenMedZoo/SafeMed-R1">作者權重</a></p>
-<p class="note">B 線、Qwen3.8-27B 與作者權重的數值來自 2026-11-26 Experiment 執行輸出，待匯出逐題結果後再驗收。</p>
+<p>MSB 安全微調達到有害度下限，四項醫學分數與原學生相差 0–0.4 個百分點。已對齊教師組 b1-q35 的有害度降至 1.04／1.02，MedQA、MedMCQA、MMLU-Med 分別下降 6.6、4.5、3.1 個百分點，PubMedQA 上升 1.0。能力變化的成因仍待定位。這個對照的有害度已接近下限，主實驗會先量測 Qwen3.5-35B-A3B-Base，再比較同一教師下原學生、b1、DT 的有害度與能力。若 b1 未增加有害行為，這組結果能檢驗的繼承效應也會受限。</p>
+<p>SafeMed-R1 作者權重的有害度為初測值。30 則回答因評審生成上限而漏計，且漏計樣本較傾向服從有害請求，初測分數偏低。評審已加入以較長上限補評的流程，修訂分數待出。原文三評審平均為 Qwen3-32B 基座 1.33、SafeMed-R1 1.10，採另一評估口徑。醫學能力表目前使用逐選項對數機率，推理模型的「先生成再抽答案」評測可作為補充。以 Qwen3.5-9B-Base 復現 SFT＋GRPO 方法已通過本機端到端與續跑測試，已排程。以 Qwen3.8-27B 產生訓練資料，分別評估 SFT 與 SFT＋GRPO；正式結果待驗。統一比較共五臂：原學生、MSB 安全微調、SafeMed-R1 式 SFT＋GRPO、b1、DT。<br><a href="https://arxiv.org/abs/2605.28338">SafeMed-R1 原文</a> · <a href="https://huggingface.co/OpenMedZoo/SafeMed-R1">作者權重</a></p>
+<p class="note">統一學生組（含 b1-q35）、Qwen3.8-27B 與作者權重的數值來自 2026-11-26 Experiment 執行輸出，待匯出逐題結果後再驗收。</p>
 <h3>A 線 · MedSafetyBench 文獻復現</h3>
 <div class="scroll" tabindex="0"><table><thead><tr><th>模型</th><th>有害度 ↓</th><th>MedQA</th><th>MedMCQA</th><th>PubMedQA</th><th>MMLU-Med</th></tr></thead><tbody>
 <tr><th>MedAlpaca-7B 原學生</th><td>2.053</td><td>41.3</td><td>35.8</td><td>37.2</td><td>60.0</td></tr>
@@ -136,25 +135,25 @@ figure{margin:0}figure img{display:block;width:100%;height:auto;border-radius:10
 </tbody></table></div>
 <p>兩組都到有害度下限，訓練期間修復觸發為零，這輪無法估計邊界教師的增益。兩組四項能力均低於原學生。改用逐選項精確對數機率重算後，表中能力分數一致。評審已加入結果快取，作者權重評估另加入指定提示詞與作答片段抽取。</p>
 </section>
-<section id="boundaries">
-<h2>醫學延伸 · 金鑰授權與病歷隱私</h2>
-<div class="cols">
-<article class="box"><h3>SudoLM · 金鑰授權</h3><p>復現組、dt-repair、dt-learned 的存取控制 F1 依序為 0.8334、0.7872、0.8375；醫學正確率依序為 25.84%、13.97%、10.08%。dt-learned 拒答 99.73% 的無金鑰公開題。復現組對這批公開題全數拒答。公開題有金鑰對照及詳答級判讀待補。</p><p><a href="https://arxiv.org/abs/2410.14676">SudoLM 原文</a></p></article>
-<article class="box"><h3>Synthea · 合成病歷隱私</h3><p>已備 1,145 位合成病人、70,548 條教師樣本，其中 39,870 條含構造秘密。搭配 MultiMedQA，按病人留出，分別量測識別資訊洩漏、授權回答與一般醫學能力。端到端訓練待啟動。</p><p><a href="https://synthetichealth.github.io/synthea/">Synthea</a> · <a href="https://arxiv.org/abs/2212.13138">MultiMedQA</a></p></article>
-</div>
-</section>
 <section id="timeline">
 <h2>醫學對照實驗時程 <small>2026 年，目標日期</small></h2>
 <div class="scroll" tabindex="0"><table><thead><tr><th>時間</th><th>對照設計</th><th>驗收產物</th></tr></thead><tbody>
-<tr><th>11/26–12/04</th><td>完成 B 線 Qwen3.8-27B 的 b1／DT；量測新基座教師。A 線維持同學生，改用 Llama-2-70B 基座重跑 b1／DT。</td><td>固定題集與評審的有害度、四項醫學能力、審查器觸發率。</td></tr>
-<tr><th>12/05–12/11</th><td>B 線同一學生、能力教師與訓練資料下，比較新基座教師的 b1／DT。檢查審查器是否實際介入，並分辨單教師與修復路徑的能力代價。</td><td>配對差值、逐題輸出與修復統計。</td></tr>
+<tr><th>11/26–12/04</th><td>優先量測 Qwen3.5-35B-A3B-Base；補齊 Qwen3.8-27B 的 DT 對照。</td><td>固定題集與評審的教師有害度、四項醫學能力、對齊教師組的修復觸發率。</td></tr>
+<tr><th>12/05–12/11</th><td>固定統一學生與 MoE 能力教師，比較原學生、b1-moe、dt-moe，定位單教師蒸餾與修復路徑的能力變化。</td><td>逐題配對差值、四項能力、審查與修復統計。</td></tr>
 <tr><th>12/12–12/18</th><td>用統一學生完成 SafeMed-R1 式 SFT＋GRPO；補評作者權重漏計的 30 則回答。彙總五臂。</td><td>同場總表、選項計分及生成評估口徑、缺失答案處理。</td></tr>
-<tr><th>12/19–12/25</th><td>加入相近的正當醫學請求測誤拒。補齊 SudoLM 公開題有／無金鑰對照。</td><td>有害回應率、誤拒率及授權答覆正確率並列。</td></tr>
-<tr><th>12/26–12/31</th><td>試跑 Synthea＋MultiMedQA，以留出病人比較原學生、b1 和 DT。整理重跑與未完成項。</td><td>病歷洩漏、醫學能力與授權指標；年底核查表及逐題結果。</td></tr>
+<tr><th>12/19–12/25</th><td>規劃相近正當醫學請求的誤拒對照；可補 Llama-2-70B 基座的 b1／DT。</td><td>誤拒評測規格，並列醫學正確性與有害回應；Llama 組另列。</td></tr>
+<tr><th>12/26–12/31</th><td>核對醫療倫理五臂的逐題結果與能力退化，整理待重跑及待確認項目。</td><td>年底總表、配對差值、修復統計及適用範圍。</td></tr>
 </tbody></table></div>
 </section>
-<details id="appendix"><summary>補充 · 研究主張、程式碼、法律與通用能力</summary><div class="appendix">
+<details id="appendix"><summary>補充 · 病歷隱私、授權、程式碼、法律與通用能力</summary><div class="appendix">
 <p><a href="/dt-opd/lab/">詞元蒸餾實驗台</a></p>
+<section id="boundaries">
+<h2>補充 · 病歷隱私與歷史授權對照</h2>
+<div class="cols">
+<article class="box"><h3>Synthea · 合成病歷隱私</h3><p>已備 1,145 位合成病人、70,548 條教師樣本，其中 39,870 條含構造秘密。搭配 MultiMedQA，按病人留出，分別量測識別資訊洩漏、授權回答與一般醫學能力。端到端訓練待啟動。</p><p><a href="https://synthetichealth.github.io/synthea/">Synthea</a> · <a href="https://arxiv.org/abs/2212.13138">MultiMedQA</a></p></article>
+<article class="box"><h3>SudoLM · 早期金鑰授權實測</h3><p>復現組、dt-repair、dt-learned 的存取控制 F1 依序為 0.8334、0.7872、0.8375；醫學正確率依序為 25.84%、13.97%、10.08%。dt-learned 拒答 99.73% 的無金鑰公開題。復現組對這批公開題全數拒答。此結果用於回顧固定金鑰條件下的存取控制。</p><p><a href="https://arxiv.org/abs/2410.14676">SudoLM 原文</a></p></article>
+</div>
+<p class="note">Synthea 試跑配置為 Qwen3.5-2B 學生、經 MultiMedQA 與合成病歷 SFT 的 Qwen3.5-9B 能力教師，以及識別資訊審查者和未接觸目標病歷的 Qwen3.5-9B 評分者。SudoLM 授權對照使用 Llama-3-8B-Instruct 學生與醫學 SFT 能力教師，邊界分別由存取規則或復現的 SudoLM 權重提供。兩組設計均無離線 KD。</p></section>
 <section id="claims">
   <h2>研究主張</h2>
   <div class="claims">

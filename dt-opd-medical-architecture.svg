@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1010" width="100%" role="img" aria-labelledby="t d" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif">
   <title id="t">DT-OPD 醫學主線架構：雙教師在線策略蒸餾（醫療倫理邊界）</title>
-  <desc id="d">學生 rollout 後，凍結的能力教師提供逐 token 分布，凍結的模型化邊界教師獨立作答並經拒答識別路由越界樣本；能力損失與邊界損失以 floor-PID λ 合併，只更新學生。推論只使用訓練後學生。左欄列兩條模型線的學生、教師與離線 KD，右欄分列三類醫學邊界。</desc>
+  <desc id="d">學生 rollout 後，凍結的能力教師提供逐 token 分布，凍結的模型化邊界教師獨立作答並經拒答識別路由越界樣本；能力損失與邊界損失以 floor-PID λ 合併，只更新學生。推論只使用訓練後學生。左欄列兩條模型線的學生、教師與離線 KD，右欄列出主實驗與評估問題。</desc>
   <defs>
     <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3f4a5a"/></marker>
     <marker id="arR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9f1d35"/></marker>
@@ -56,11 +56,11 @@
   <!-- B 線 -->
   <rect x="44" y="376" width="372" height="222" rx="9" fill="#f6f8fb" stroke="#d5dae2"/>
   <text x="58" y="401" class="bt" fill="#14213d">B 線｜統一現代模型（最終同場對比）</text>
-  <rect x="58" y="411" width="148" height="21" rx="10.5" fill="#e4ecfb"/><text x="132" y="426" class="chip" fill="#1f4aa8" text-anchor="middle">b1 訓練中・dt 排程</text>
+  <rect x="58" y="411" width="148" height="21" rx="10.5" fill="#e4ecfb"/><text x="132" y="426" class="chip" fill="#1f4aa8" text-anchor="middle">q35：b1 已完成</text>
   <text x="58" y="455" class="lb">學生</text><text x="132" y="455" class="tx">Qwen3.5-9B-Base</text>
-  <text x="58" y="478" class="lb">能力教師</text><text x="132" y="478" class="tx">Qwen3.8-27B（b1 訓練中）</text>
+  <text x="58" y="478" class="lb">能力教師</text><text x="132" y="478" class="tx">Qwen3.8-27B（對齊對照）</text>
   <rect x="128" y="486" width="282" height="24" rx="5" fill="none" stroke="#8a94a3" stroke-dasharray="5 3"/>
-  <text x="136" y="503" class="sm">Qwen3.5-35B-A3B-Base（未對齊，排程）</text>
+  <text x="136" y="503" class="sm">Qwen3.5-35B-A3B-Base（主實驗）</text>
   <text x="58" y="531" class="lb">邊界教師</text><text x="132" y="531" class="tx">Qwen3.5-9B-Base＋MSB 安全微調</text>
   <text x="58" y="554" class="lb">離線 KD</text><text x="132" y="554" class="tx">不使用</text>
   <text x="58" y="577" class="lb">文獻方法</text><text x="132" y="577" class="tx">同一學生復現 SafeMed-R1（排程）</text>
@@ -164,7 +164,7 @@
 
   <!-- ===== 右欄：三類醫學邊界 ===== -->
   <rect x="1190" y="110" width="380" height="650" rx="12" fill="#ffffff" stroke="#d5dae2" filter="url(#sh)"/>
-  <text x="1210" y="142" class="ph">三類醫學邊界（分開評估）</text>
+  <text x="1210" y="142" class="ph">醫療倫理實驗</text>
   <line x1="1210" y1="152" x2="1550" y2="152" stroke="#e3e7ed"/>
 
   <!-- 1 醫療倫理 -->
@@ -174,30 +174,21 @@
   <text x="1218" y="245" class="tx">邊界：違反 AMA 九條醫學倫理原則的請求</text>
   <text x="1218" y="267" class="tx">邊界教師：模型化（MSB 安全微調）</text>
   <text x="1218" y="289" class="tx">指標：有害度＋四項醫學能力</text>
-  <text x="1218" y="306" class="sm">A 線 b1／dt 已完成；B 線 b1 訓練中、dt 排程</text>
+  <text x="1218" y="306" class="sm">對齊教師組 b1 已完成；Qwen 組 dt 待完成</text>
   <text x="1218" y="324" class="sm">誤拒（相近正當請求）評估尚未納入</text>
 
-  <!-- 2 金鑰授權 -->
-  <rect x="1204" y="348" width="352" height="196" rx="9" fill="#f6f8fb" stroke="#d5dae2"/>
-  <text x="1218" y="373" class="bt" fill="#14213d">2　金鑰授權｜SudoLM 固定金鑰</text>
-  <rect x="1218" y="383" width="132" height="21" rx="10.5" fill="#e3f2e8"/><text x="1284" y="398" class="chip" fill="#17643a" text-anchor="middle">300 步已完成・實測</text>
-  <text x="1218" y="427" class="lb">學生</text><text x="1286" y="427" class="tx">Llama-3-8B-Instruct</text>
-  <text x="1218" y="449" class="lb">能力教師</text><text x="1286" y="449" class="tx">Medical SFT（同基座）</text>
-  <text x="1218" y="471" class="lb">邊界</text><text x="1286" y="471" class="tx">存取規則程式（dt-repair）</text>
-  <text x="1286" y="491" class="tx">或模型化邊界（dt-learned）</text>
-  <text x="1218" y="513" class="lb">離線 KD</text><text x="1286" y="513" class="tx">不使用</text>
-  <text x="1218" y="534" class="sm">存取控制對照，不宣稱未見邊界泛化</text>
-
-  <!-- 3 病歷隱私 -->
-  <rect x="1204" y="558" width="352" height="190" rx="9" fill="#ffffff" stroke="#8a94a3" stroke-width="1.4" stroke-dasharray="6 4"/>
-  <text x="1218" y="583" class="bt" fill="#14213d">3　病歷隱私｜Synthea 合成病歷</text>
-  <rect x="1218" y="593" width="156" height="21" rx="10.5" fill="#eceef2"/><text x="1296" y="608" class="chip" fill="#4a5462" text-anchor="middle">規劃・資料已備未訓練</text>
-  <text x="1218" y="637" class="lb">學生</text><text x="1286" y="637" class="tx">Qwen3.5-2B</text>
-  <text x="1218" y="659" class="lb">能力教師</text><text x="1286" y="659" class="tx">Qwen3.5-9B 經 MultiMedQA</text>
-  <text x="1286" y="679" class="tx">＋Synthea 病歷 SFT</text>
-  <text x="1218" y="701" class="lb">審查者</text><text x="1286" y="701" class="tx">識別資訊審查者，經他人病歷調校</text>
-  <text x="1218" y="723" class="lb">評分者</text><text x="1286" y="723" class="tx">乾淨 Qwen3.5-9B</text>
-  <text x="1218" y="742" class="sm">秘密：構造的病歷識別資訊；1,145 位病人</text>
+  <rect x="1204" y="348" width="352" height="190" rx="9" fill="#f6f8fb" stroke="#d5dae2"/>
+  <text x="1218" y="373" class="bt" fill="#14213d">主實驗｜固定 MoE 能力教師</text>
+  <text x="1218" y="408" class="tx">Qwen3.5-35B-A3B-Base</text>
+  <text x="1218" y="437" class="tx">先量測教師的有害度與醫學能力</text>
+  <text x="1218" y="466" class="tx">同學生、同教師：比較 b1-moe 與 dt-moe</text>
+  <text x="1218" y="495" class="tx">比對原學生，檢驗有害行為是否經蒸餾傳遞</text>
+  <rect x="1204" y="558" width="352" height="190" rx="9" fill="#f6f8fb" stroke="#d5dae2"/>
+  <text x="1218" y="583" class="bt" fill="#14213d">結果判讀｜安全與能力分別量測</text>
+  <text x="1218" y="618" class="tx">安全：MSB 有害度與越界率</text>
+  <text x="1218" y="647" class="tx">機制：審查觸發頻率與實際修復比例</text>
+  <text x="1218" y="676" class="tx">能力：四項醫學問答與配對差值</text>
+  <text x="1218" y="705" class="tx">適用性：規劃正當醫學請求的誤拒對照</text>
 
   <!-- ===== 下列：推論 ===== -->
   <rect x="30" y="780" width="700" height="132" rx="12" fill="#ffffff" stroke="#d5dae2" filter="url(#sh)"/>
@@ -218,10 +209,10 @@
   <text x="770" y="837" class="tx">• A 線能力教師 Llama-2-70B-chat 有害度 1.004，訓練中邊界教師未觸發越界，b1 與 dt 同為 1.00，</text>
   <text x="784" y="857" class="tx">無法分離邊界教師的額外作用。</text>
   <text x="770" y="881" class="tx">• B 線能力教師 Qwen3.8-27B 有害度 1.015，同樣高度安全；已排程未對齊的 Llama-2-70B 基座（A 線）</text>
-  <text x="784" y="901" class="tx">與 Qwen3.5-35B-A3B-Base（B 線，詞表與學生一致），讓越界樣本實際出現。</text>
+  <text x="784" y="901" class="tx">主實驗採 Qwen3.5-35B-A3B-Base，先量測教師，再檢驗有害行為是否傳給學生。</text>
 
   <!-- 註腳 -->
-  <text x="30" y="944" class="sm">KD＝離線知識蒸餾暖身；醫學三條邊界線均未使用。OPD＝在線策略蒸餾：學生自行取樣，能力教師在學生生成的序列上提供分布。</text>
+  <text x="30" y="944" class="sm">KD＝離線知識蒸餾暖身；本圖醫療倫理組均未使用。OPD＝在線策略蒸餾：學生自行取樣，能力教師在學生生成的序列上提供分布。</text>
   <text x="30" y="964" class="sm">MSB 安全微調＝MedSafetyBench 原文方法，以 900 條「有害請求→安全拒答」示範做 LoRA 監督微調；在本案同時作為文獻基線與邊界教師。</text>
   <text x="30" y="984" class="sm">有害度由本機 Qwen3.8-27B 評審，原文使用 GPT-4 等評審，兩者數值不可直接等同。</text>
 </svg>
