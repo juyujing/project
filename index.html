@@ -132,6 +132,7 @@ th{color:var(--muted);font-weight:500;font-size:12px}
 <div class="wrap">
 <header>
   <h1>DT-OPD：双教师 token 级分解蒸馏</h1>
+  <p><a href="dt-opd/proof-map/" lang="zh-TW" hreflang="zh-TW">最新研究證明地圖</a> · <a href="dt-opd/proof-map/zh-CN.html" lang="zh-CN" hreflang="zh-CN">简体版</a></p>
   <p class="lede">学生的一次输出同时包含边界规则片段和作答。每个 token 的分布被拆成能力成分和边界成分：能力成分向含秘密的能力教师学，但先用干净参照截顶；边界成分学边界教师相对自身基底的位移。权限只由可信 metadata 决定。</p>
   <div class="legend">
     <span><i class="sw cap"></i>能力分支</span>
@@ -197,15 +198,10 @@ th{color:var(--muted);font-weight:500;font-size:12px}
   </div>
 </section>
 
-<section>
-  <h2>进度</h2>
-  <div class="status" style="margin-top:12px">
-    <div class="st"><span class="pill done">完成</span><span>OPSA 复现（Qwen3-1.7B，安全总分 69.06 → 93.68），作为基线</span></div>
-    <div class="st"><span class="pill done">完成</span><span>可信 validator、可信投影、规则格式：四类各 500 题边界计划 500/500，越权尝试 0</span></div>
-    <div class="st"><span class="pill done">完成</span><span>秘密继承正控制（TOFU，Llama）：训练中问过的秘密 对数概率 +0.92；没问过的同作者题 +0.37</span></div>
-    <div class="st"><span class="pill wip">进行中</span><span>离线分析：e、q̃、δ 能否区分秘密 token，决策点是否稀疏（11/12–11/18）</span></div>
-    <div class="st"><span class="pill wip">设计中</span><span>第一期 loss 与双层学生（11/19–12/02）；Qwen3-8B 双胞胎教师；第二期 RL</span></div>
-  </div>
+<section aria-labelledby="research-status">
+  <h2 id="research-status" lang="zh-TW">研究進度</h2>
+  <p class="note" lang="zh-TW">上方動畫展示早期 token 分解設計。2026 年 11 月 26 日的研究地圖收錄法律、程式碼與醫學的最新可核對結果，以及進行中與待驗收的比較。</p>
+  <p><a href="dt-opd/proof-map/" lang="zh-TW" hreflang="zh-TW">查看繁體證明地圖</a> · <a href="dt-opd/proof-map/zh-CN.html" lang="zh-CN" hreflang="zh-CN">查看简体版</a></p>
 </section>
 </div>
 
