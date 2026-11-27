@@ -3,53 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
-<meta name="dt-opd-map-revision" content="2026-11-27-dark-medical">
+<meta name="dt-opd-map-revision" content="2026-11-27-plain-blog">
 <title>DT-OPD · 双教师在线策略蒸馏</title>
 <link rel="canonical" href="https://project.juyujing.com/zh-CN.html">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600&display=swap">
 <style>
-/* One dark editor-like theme. One body style, one caption style, one table style; color only inside the figures. */
-:root{
-  color-scheme:dark;
+/* Plain old-blog page: browser defaults for text, links and tables. Only the figures keep their own dark palette. */
+body{margin:16px;font-family:"Times New Roman",Times,"Songti SC","SimSun",serif}
+nav a{white-space:nowrap}
+.scroll{overflow-x:auto}
+table.wide td{white-space:nowrap}
+tr.dt th,tr.dt td{font-weight:bold}
+figure{margin:1em 0;
   --bg:#1e1e1e; --panel:#252526; --ink:#d4d4d4; --strong:#ffffff; --muted:#9d9d9d; --line:#3c3c3c;
   --font:"Noto Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;
-  /* figure-only palette */
-  --f-acc:#5fbfae; --f-acc-bg:#1d3531; --f-red:#f09a8c; --f-red-bg:#3d211d;
-}
-*{box-sizing:border-box}
-html{background:var(--bg)}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.75}
-.wrap{max-width:1040px;margin:0 auto;padding:40px max(16px,env(safe-area-inset-right,0px)) 72px max(16px,env(safe-area-inset-left,0px));display:grid;grid-template-columns:minmax(0,1fr);gap:48px}
-section{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;min-width:0;scroll-margin-top:16px}
-h1,h2{font-family:var(--font);font-weight:600;color:var(--strong);margin:0;line-height:1.4}
-h1{font-size:28px}
-h2{font-size:20px;padding-bottom:8px;border-bottom:1px solid var(--line)}
-p{margin:0}
-a{color:inherit;text-decoration:underline;text-decoration-color:var(--muted);text-underline-offset:3px}
-a:hover{color:var(--strong);text-decoration-color:var(--strong)}
-a:focus-visible,.scroll:focus-visible{outline:1px solid var(--strong);outline-offset:2px}
-b{color:var(--strong);font-weight:600}
-.cap,figcaption,.meta{font-size:13px;color:var(--muted);line-height:1.6}
-header{display:grid;gap:12px}
-nav{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:14px}
-ol{margin:0;padding-left:22px;display:grid;gap:6px}
-.scroll{overflow-x:auto;border:1px solid var(--line);background:var(--panel)}
-table{border-collapse:collapse;width:100%;font-size:14px}
-th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top;font-weight:400}
-thead th{color:var(--muted);font-size:13px;white-space:nowrap}
-tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
-td{font-variant-numeric:tabular-nums}
-tr.dt th,tr.dt td{color:var(--strong);font-weight:600}
-table.wide{min-width:720px}
-table.wide td{white-space:nowrap}
-table.summary{font-size:16.5px;min-width:620px}
-table.summary th,table.summary td{white-space:nowrap}
-table.summary th,table.summary td{padding:12px 16px}
-table.summary thead th{font-size:14px}
-details>summary{cursor:pointer;color:var(--ink)}
-details[open]>summary{margin-bottom:12px}
-figure{margin:0;display:grid;gap:8px;min-width:0}
+  --f-acc:#5fbfae; --f-acc-bg:#1d3531; --f-red:#f09a8c; --f-red-bg:#3d211d}
 .figscroll{overflow-x:auto;border:1px solid var(--line);background:var(--panel);padding:12px}
 .figscroll svg{display:block;width:100%;min-width:760px;height:auto}
 svg text{font-family:var(--font);fill:var(--ink);font-size:15px}
@@ -70,8 +38,6 @@ svg .la{fill:none;stroke:var(--f-acc);stroke-width:1.5;stroke-dasharray:6 4}
 svg .la2{fill:none;stroke:var(--f-acc);stroke-width:1.5}
 svg .sep{stroke:var(--line);stroke-width:1}
 svg .mk{fill:var(--muted)} svg .mka{fill:var(--f-acc)} svg .mkr{fill:var(--f-red)}
-.appendix{display:grid;grid-template-columns:minmax(0,1fr);gap:48px;padding-top:8px;border-top:1px solid var(--line)}
-@media(max-width:480px){.wrap{padding-top:28px;gap:40px}h1{font-size:24px}table.summary{font-size:15px}table.summary th,table.summary td{padding:10px 12px}}
 </style>
 </head>
 <body>
@@ -79,7 +45,7 @@ svg .mk{fill:var(--muted)} svg .mka{fill:var(--f-acc)} svg .mkr{fill:var(--f-red
 <header>
 <h1>DT-OPD 双教师在线策略蒸馏</h1>
 <p class="meta">医疗伦理边界 · 2026-11-27</p>
-<nav aria-label="页面导览"><a href="#background">背景</a><a href="#method">方法</a><a href="#medicine">医学实验</a><a href="#appendix">附录</a><a href="/" lang="zh-TW" hreflang="zh-TW">繁體中文</a></nav>
+<nav aria-label="页面导览"><a href="#background">背景</a> | <a href="#method">方法</a> | <a href="#medicine">医学实验</a> | <a href="#appendix">附录</a> | <a href="/" lang="zh-TW" hreflang="zh-TW">繁體中文</a></nav>
 </header>
 
 <section id="abstract">
